@@ -85,7 +85,15 @@
         <div class="login-box">
             <h2 id="auth-title">🔐 Iniciar Sesión</h2>
             <input type="email" id="auth-email" placeholder="Correo electrónico">
-            <input type="password" id="auth-password" placeholder="Contraseña">
+            
+            <!-- ✅ NUEVO: Contenedor para el campo de contraseña y el botón de ojo -->
+            <div style="position: relative; width: 100%; margin-bottom: 1rem;">
+                <input type="password" id="auth-password" placeholder="Contraseña" style="width: 100%; padding-right: 45px; box-sizing: border-box;">
+                <button type="button" onclick="window.togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.3rem; color: #666; padding: 0; display: flex; align-items: center; justify-content: center; height: 100%;">
+                    👁️
+                </button>
+            </div>
+            
             <button class="btn-save" id="auth-btn" onclick="window.handleAuth()">Entrar</button>
             <p id="auth-error" style="color: #e74c3c; margin-top: 1rem; display: none; font-size: 0.9rem;"></p>
             <p class="auth-toggle">
@@ -297,12 +305,10 @@
                     currentUserRole = userData.role || 'admin';
                     console.log("👤 Rol del usuario:", currentUserRole);
                     
-                    // ✅ SIMPLIFICACIÓN: Para el admin, storeOwnerId SIEMPRE es currentUserId
                     if (currentUserRole === 'admin') {
                         storeOwnerId = currentUserId;
                         console.log("👑 Es admin. storeOwnerId = currentUserId:", storeOwnerId);
                         
-                        // Asegurar que el documento tenga ownerId para consistencia
                         if (!userData.ownerId) {
                             await db.collection('usuarios').doc(currentUserId).update({
                                 ownerId: currentUserId
@@ -310,7 +316,6 @@
                             console.log("✅ ownerId agregado al documento del admin");
                         }
                     } else {
-                        // Es empleado: usar el ownerId guardado en su documento
                         storeOwnerId = userData.ownerId;
                         console.log("🔗 Es empleado. storeOwnerId:", storeOwnerId);
                         
@@ -322,7 +327,6 @@
                         }
                     }
                 } else {
-                    // Usuario no existe en Firestore, crearlo como admin
                     console.log("Usuario no existe en Firestore, creando como admin...");
                     currentUserRole = 'admin';
                     storeOwnerId = currentUserId;
@@ -370,6 +374,16 @@
             document.getElementById('auth-btn').textContent = isLoginMode ? 'Entrar' : 'Registrar';
             document.getElementById('auth-toggle-text').textContent = isLoginMode ? 'Registrar Administrador (Solo primera vez)' : '¿Ya tienes cuenta? Inicia sesión';
             document.getElementById('auth-error').style.display = 'none';
+        }
+
+        // ✅ NUEVO: Función para mostrar/ocultar contraseña en cualquier dispositivo
+        window.togglePasswordVisibility = function() {
+            const passwordInput = document.getElementById('auth-password');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+            } else {
+                passwordInput.type = 'password';
+            }
         }
 
         window.handleAuth = async function() {
@@ -838,7 +852,6 @@
             }
         }
 
-        // ✅ CORRECCIÓN: Usar storeOwnerId en lugar de currentUserId
         window.loadEmployees = function() {
             console.log("👥 Cargando empleados del admin. storeOwnerId:", storeOwnerId, "currentUserId:", currentUserId);
             db.collection('usuarios').where('role', '==', 'empleado').where('ownerId', '==', storeOwnerId).onSnapshot((snapshot) => {
@@ -867,7 +880,6 @@
             });
         }
 
-        // ✅ CORRECCIÓN: Usar storeOwnerId y agregar logs
         window.createEmployee = async function() {
             const name = document.getElementById('emp-name').value.trim();
             const email = document.getElementById('emp-email').value.trim();
