@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Tienda Digital SaaS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #f0f2f5; padding: 1rem; padding-bottom: 80px; }
+        .header { background: #2c3e50; color: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .header-info h1 { font-size: 1.3rem; margin-bottom: 0.3rem; }
+        .header-info p { font-size: 0.8rem; opacity: 0.8; }
+        .btn-logout { background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.85rem; }
+        .btn-logout:hover { background: #c0392b; }
+        
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .tab-btn { flex: 1; min-width: 100px; padding: 0.8rem; border: none; background: white; color: #2c3e50; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; }
+        .tab-btn.active { background: #ff6b35; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.9rem; color: #2c3e50; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.9rem; }
+        .form-group input[type="color"] { height: 45px; padding: 0.2rem; cursor: pointer; }
+        .btn-save { background: #25d366; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; }
+        .btn-save:hover { background: #128c7e; }
+        .btn-save:disabled { background: #95a5a6; cursor: not-allowed; }
+        .btn-secondary { background: #3498db; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 0.5rem; }
+
+        .product-card { background: white; padding: 1rem; border-radius: 10px; display: flex; align-items: center; gap: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 0.8rem; }
+        .product-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #eee; }
+        .product-info { flex: 1; }
+        .product-name { font-weight: 700; color: #2c3e50; font-size: 0.95rem; }
+        .product-price { color: #ff6b35; font-weight: 600; font-size: 0.9rem; }
+        .product-category { font-size: 0.75rem; color: #666; text-transform: uppercase; }
+        
+        .toggle-switch { position: relative; width: 50px; height: 26px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e74c3c; transition: 0.3s; border-radius: 26px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: #25d366; }
+        input:checked + .toggle-slider:before { transform: translateX(24px); }
+        
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-left: 0.5rem; }
+        .btn-edit { background: #3498db; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; width: 100%; max-width: 1200px; margin: 0 auto; }
+        .order-card { background: white; padding: 1.2rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 5px solid #25d366; }
+        .order-card.processing { border-left-color: #f39c12; }
+        .order-card.completed { border-left-color: #95a5a6; opacity: 0.7; }
+        .order-header { display: flex; justify-content: space-between; margin-bottom: 0.8rem; }
+        .order-items { background: #f8f9fa; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem; font-size: 0.9rem; }
+        .order-item { display: flex; justify-content: space-between; padding: 0.2rem 0; }
+        .order-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn-action { padding: 0.5rem 0.8rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; flex: 1; color: white; }
+        .btn-process { background: #f39c12; }
+        .btn-complete { background: #95a5a6; }
+        
+        .login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #2c3e50; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-box { background: white; padding: 2rem; border-radius: 15px; text-align: center; width: 90%; max-width: 380px; }
+        .login-box h2 { margin-bottom: 1.5rem; color: #2c3e50; }
+        .login-box input { padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px; width: 100%; margin-bottom: 1rem; font-size: 1rem; }
+        .hidden { display: none !important; }
+        .loading { text-align: center; padding: 2rem; color: #666; }
+        .auth-toggle { margin-top: 1rem; font-size: 0.9rem; color: #666; }
+        .auth-toggle span { color: #ff6b35; cursor: pointer; font-weight: 600; text-decoration: underline; }
+
+        .employee-card { background: white; padding: 1rem; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 0.8rem; }
+        .employee-info { display: flex; flex-direction: column; }
+        .employee-name { font-weight: 700; color: #2c3e50; }
+        .employee-email { font-size: 0.85rem; color: #666; }
+
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+    <link rel="manifest" href="manifest-admin.json">
+    <meta name="theme-color" content="#2c3e50">
+    <script>
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
+    </script>
+</head>
+<body>
+    <div class="login-screen" id="login-screen">
+        <div class="login-box">
+            <h2 id="auth-title">🔐 Iniciar Sesión</h2>
+            <input type="email" id="auth-email" placeholder="Correo electrónico">
+            <input type="password" id="auth-password" placeholder="Contraseña">
+            <button class="btn-save" id="auth-btn" onclick="window.handleAuth()">Entrar</button>
+            <p id="auth-error" style="color: #e74c3c; margin-top: 1rem; display: none; font-size: 0.9rem;"></p>
+            <p class="auth-toggle">
+                <span id="auth-toggle-text" onclick="window.toggleAuthMode()">Registrar Administrador (Solo primera vez)</span>
+            </p>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="hidden">
+        <div class="header">
+            <div class="header-info">
+                <h1>⚙️ Centro de Control</h1>
+                <p id="user-email-display">Cargando usuario...</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 8px;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: white;" id="store-status-text">Tienda: Abierta 🟢</span>
+                    <label class="toggle-switch" style="margin: 0;">
+                        <input type="checkbox" id="store-open-toggle" checked onchange="window.toggleStoreStatus(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <button class="btn-logout" id="btn-copy-link" onclick="window.copyStoreLink()" style="background: #0047AB;">🔗 Copiar mi Tienda</button>
+                <button class="btn-logout" onclick="window.logout()">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="window.switchTab('pedidos')">🛒 Pedidos</button>
+            <button class="tab-btn" onclick="window.switchTab('productos')">📦 Productos</button>
+            <button class="tab-btn admin-only" onclick="window.switchTab('equipo')">👥 Equipo</button>
+            <button class="tab-btn admin-only" onclick="window.switchTab('config')">⚙️ Configuración</button>
+        </div>
+
+        <div id="tab-pedidos" class="tab-content active">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin: 0 auto 2rem auto; max-width: 1000px;">
+                <div style="background: white; padding: 1.2rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <div style="font-size: 2rem; font-weight: 700; color: #ff6b35; margin-bottom: 0.3rem;" id="stat-new">0</div>
+                    <div style="color: #666; font-size: 0.85rem;">Nuevos</div>
+                </div>
+                <div style="background: white; padding: 1.2rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <div style="font-size: 2rem; font-weight: 700; color: #f39c12; margin-bottom: 0.3rem;" id="stat-processing">0</div>
+                    <div style="color: #666; font-size: 0.85rem;">En proceso</div>
+                </div>
+                <div style="background: white; padding: 1.2rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <div style="font-size: 2rem; font-weight: 700; color: #25d366; margin-bottom: 0.3rem;" id="stat-sales">$0</div>
+                    <div style="color: #666; font-size: 0.85rem;">Ventas Hoy</div>
+                </div>
+                <div class="admin-only" onclick="window.openHistoricalModal()" style="background: #2c3e50; padding: 1.2rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <div style="font-size: 2rem; font-weight: 700; color: #ffffff; margin-bottom: 0.3rem;" id="stat-historical">$0</div>
+                    <div style="color: #cbd5e1; font-size: 0.85rem;">Ventas Históricas 👆</div>
+                </div>
+            </div>
+            <h3 style="margin-bottom: 1rem; text-align: center; color: #2c3e50;">Pedidos Recientes</h3>
+            <div id="orders-container" class="orders-grid"></div>
+        </div>
+
+        <div id="tab-productos" class="tab-content">
+            <div class="admin-only" style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h3 style="margin-bottom: 1rem;">Agregar / Editar Producto</h3>
+                <input type="hidden" id="edit-product-id">
+                <div class="form-group">
+                    <label>Nombre del producto</label>
+                    <input type="text" id="prod-name" placeholder="Ej: Nombre del producto">
+                </div>
+                <div class="form-group">
+                    <label>Descripción Corta</label>
+                    <textarea id="prod-desc" rows="2" placeholder="Ej: Descripción breve"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Descripción Detallada</label>
+                    <textarea id="prod-detailed-desc" rows="4" placeholder="Ej: Detalles para la ventana emergente"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;"><label>Precio ($)</label><input type="number" id="prod-price" placeholder="89"></div>
+                    <div class="form-group" style="flex: 1;"><label>Categoría</label><input type="text" id="prod-category" placeholder="Ej: Bebidas"></div>
+                </div>
+                <div class="form-group">
+                    <label>Foto del producto</label>
+                    <input type="file" id="prod-image-file" accept="image/*">
+                    <img id="prod-image-preview" style="max-width: 100px; margin-top: 0.5rem; border-radius: 8px; display: none;">
+                    <input type="hidden" id="prod-image-url">
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="prod-available" checked style="width: auto;"> Disponible
+                    </label>
+                </div>
+                <button class="btn-save" id="btn-save-product" onclick="window.saveProduct()">Guardar Producto</button>
+                <button class="btn-secondary" id="btn-cancel-edit" onclick="window.cancelEdit()" style="display: none;">Cancelar Edición</button>
+            </div>
+            <h3 style="margin-bottom: 1rem; text-align: center;">Mis Productos</h3>
+            <div id="products-container" style="max-width: 800px; margin: 0 auto;"></div>
+        </div>
+
+        <div id="tab-equipo" class="tab-content admin-only">
+            <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h3 style="margin-bottom: 1rem;">Crear Cuenta de Empleado</h3>
+                <p style="color: #e74c3c; font-size: 0.85rem; margin-bottom: 1rem; background: #fff3cd; padding: 0.8rem; border-radius: 6px;">
+                    ⚠️ <strong>Importante:</strong> Por seguridad de Firebase, al crear esta cuenta tu sesión actual se cerrará. Deberás volver a iniciar sesión como Administrador después.
+                </p>
+                <div class="form-group">
+                    <label>Nombre del empleado</label>
+                    <input type="text" id="emp-name" placeholder="Ej: Juan Pérez">
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="emp-email" placeholder="empleado@tienda.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña temporal</label>
+                    <input type="password" id="emp-password" placeholder="Mínimo 6 caracteres">
+                </div>
+                <button class="btn-save" onclick="window.createEmployee()">Crear Empleado</button>
+            </div>
+            <h3 style="margin-bottom: 1rem; text-align: center; max-width: 800px; margin-left: auto; margin-right: auto;">Empleados Registrados</h3>
+            <div id="employees-container" style="max-width: 800px; margin: 0 auto;"></div>
+        </div>
+
+        <div id="tab-config" class="tab-content admin-only">
+            <div style="background: white; padding: 1.5rem; border-radius: 10px; max-width: 800px; margin: 0 auto;">
+                <h3 style="margin-bottom: 1rem;">Apariencia de la Tienda</h3>
+                <div class="form-group">
+                    <label>Logo de la Tienda</label>
+                    <input type="file" id="cfg-logo-file" accept="image/*">
+                    <img id="cfg-logo-preview" style="max-width: 120px; margin-top: 0.5rem; border-radius: 8px; display: none; background: #eee; padding: 5px;">
+                    <input type="hidden" id="cfg-logo-url">
+                </div>
+                <div class="form-group"><label>Emoji/Ícono</label><input type="text" id="cfg-emoji" placeholder="Ej: 🍔" maxlength="4"></div>
+                <div class="form-group"><label>Nombre de la tienda</label><input type="text" id="cfg-name" placeholder="Mi Restaurante"></div>
+                <div class="form-group"><label>Eslogan</label><input type="text" id="cfg-tagline" placeholder="Los mejores platillos"></div>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;"><label>Color Principal</label><input type="color" id="cfg-primary" value="#ff6b35"></div>
+                    <div class="form-group" style="flex: 1;"><label>Color Secundario</label><input type="color" id="cfg-secondary" value="#2c3e50"></div>
+                </div>
+                <div class="form-group"><label>Color de Fondo</label><input type="color" id="cfg-background" value="#f8f9fa"></div>
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #eee;">
+                <h3 style="margin-bottom: 1rem;">Información de Contacto</h3>
+                <div class="form-group"><label>Dirección</label><input type="text" id="cfg-address" placeholder="Av. Principal #123"></div>
+                <div class="form-group"><label>Horario</label><input type="text" id="cfg-hours" placeholder="Lun-Dom: 12:00 - 22:00"></div>
+                <div class="form-group"><label>Teléfono / WhatsApp</label><input type="text" id="cfg-phone" placeholder="61 2443 3992"></div>
+                <button class="btn-save" onclick="window.saveConfig()">💾 Guardar Toda la Configuración</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="historical-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9998; align-items: center; justify-content: center; padding: 1rem;">
+        <div style="background: white; border-radius: 15px; max-width: 600px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 2rem; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <button onclick="window.closeHistoricalModal()" style="position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; font-weight: 700;">✕</button>
+            <h2 style="margin-bottom: 0.5rem; color: #2c3e50;">📊 Ventas Históricas</h2>
+            <p style="color: #666; margin-bottom: 1.5rem; font-size: 0.9rem;">Desglose de ventas por día</p>
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div><div style="font-size: 0.85rem; color: #666;">Total Histórico</div><div style="font-size: 1.8rem; font-weight: 700; color: #25d366;" id="modal-total">$0</div></div>
+                <div style="text-align: right;"><div style="font-size: 0.85rem; color: #666;">Total Pedidos</div><div style="font-size: 1.5rem; font-weight: 700; color: #ff6b35;" id="modal-count">0</div></div>
+            </div>
+            <div id="daily-breakdown"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAAgryOgzuaKQw8s2APP4ezc4k6igHRUmM",
+            authDomain: "tienda-digital-32a30.firebaseapp.com",
+            projectId: "tienda-digital-32a30",
+            storageBucket: "tienda-digital-32a30.firebasestorage.app",
+            messagingSenderId: "989141190509",
+            appId: "1:989141190509:web:08dcb840d3c5ed79f47c64"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const CLOUDINARY_CLOUD_NAME = "oxznb5kn";
+        const CLOUDINARY_UPLOAD_PRESET = "Tienda Digital";
+
+        let currentUserId = null;
+        let currentUserRole = 'admin';
+        let storeOwnerId = null;
+        let isLoginMode = true;
+        let products = [];
+        let orders = [];
+        let employees = [];
+        let audioContext = null;
+        let hasInteracted = false;
+
+        document.addEventListener('click', () => {
+            if (!hasInteracted) {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') audioContext.resume();
+                hasInteracted = true;
+            }
+        }, { once: true });
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                console.log("✅ Usuario logueado. UID:", currentUserId);
+                
+                const userDoc = await db.collection('usuarios').doc(currentUserId).get();
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    currentUserRole = userData.role || 'admin';
+                    console.log("👤 Rol del usuario:", currentUserRole);
+                    
+                    // ✅ SIMPLIFICACIÓN: Para el admin, storeOwnerId SIEMPRE es currentUserId
+                    if (currentUserRole === 'admin') {
+                        storeOwnerId = currentUserId;
+                        console.log("👑 Es admin. storeOwnerId = currentUserId:", storeOwnerId);
+                        
+                        // Asegurar que el documento tenga ownerId para consistencia
+                        if (!userData.ownerId) {
+                            await db.collection('usuarios').doc(currentUserId).update({
+                                ownerId: currentUserId
+                            });
+                            console.log("✅ ownerId agregado al documento del admin");
+                        }
+                    } else {
+                        // Es empleado: usar el ownerId guardado en su documento
+                        storeOwnerId = userData.ownerId;
+                        console.log("🔗 Es empleado. storeOwnerId:", storeOwnerId);
+                        
+                        if (!storeOwnerId) {
+                            console.error("❌ ERROR: Este empleado no tiene ownerId");
+                            alert("Error: Cuenta de empleado inválida. Pide al administrador que te elimine y te vuelva a crear.");
+                            auth.signOut();
+                            return;
+                        }
+                    }
+                } else {
+                    // Usuario no existe en Firestore, crearlo como admin
+                    console.log("Usuario no existe en Firestore, creando como admin...");
+                    currentUserRole = 'admin';
+                    storeOwnerId = currentUserId;
+                    await db.collection('usuarios').doc(currentUserId).set({
+                        email: user.email,
+                        role: 'admin',
+                        ownerId: currentUserId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+
+                const roleLabel = currentUserRole === 'admin' ? '(Administrador)' : '(Empleado)';
+                document.getElementById('user-email-display').textContent = user.email + ' ' + roleLabel;
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+                
+                window.applyRolePermissions();
+                window.loadConfig();
+                window.loadProducts();
+                window.loadOrders();
+                if (currentUserRole === 'admin') window.loadEmployees();
+            } else {
+                currentUserId = null;
+                currentUserRole = 'admin';
+                storeOwnerId = null;
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('admin-panel').classList.add('hidden');
+                products = []; 
+                orders = [];
+                employees = [];
+            }
+        });
+
+        window.applyRolePermissions = function() {
+            const adminElements = document.querySelectorAll('.admin-only');
+            adminElements.forEach(el => {
+                el.style.display = currentUserRole === 'admin' ? '' : 'none';
+            });
+        }
+
+        window.toggleAuthMode = function() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').textContent = isLoginMode ? '🔐 Iniciar Sesión' : '📝 Registrar Administrador';
+            document.getElementById('auth-btn').textContent = isLoginMode ? 'Entrar' : 'Registrar';
+            document.getElementById('auth-toggle-text').textContent = isLoginMode ? 'Registrar Administrador (Solo primera vez)' : '¿Ya tienes cuenta? Inicia sesión';
+            document.getElementById('auth-error').style.display = 'none';
+        }
+
+        window.handleAuth = async function() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const errorEl = document.getElementById('auth-error');
+            const btn = document.getElementById('auth-btn');
+
+            if (!email || !password) {
+                errorEl.textContent = 'Por favor ingresa correo y contraseña.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            btn.textContent = 'Procesando...';
+            btn.disabled = true;
+            errorEl.style.display = 'none';
+
+            try {
+                if (isLoginMode) {
+                    await auth.signInWithEmailAndPassword(email, password);
+                } else {
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const uid = userCredential.user.uid; 
+                    await db.collection('usuarios').doc(uid).set({
+                        email: email,
+                        role: 'admin',
+                        ownerId: uid,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+                let msg = 'Error de autenticación.';
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') msg = 'Correo o contraseña incorrectos.';
+                if (error.code === 'auth/email-already-in-use') msg = 'Este correo ya está registrado.';
+                if (error.code === 'auth/weak-password') msg = 'La contraseña debe tener al menos 6 caracteres.';
+                if (error.code === 'auth/invalid-email') msg = 'El formato del correo no es válido.';
+                errorEl.textContent = msg;
+                errorEl.style.display = 'block';
+            } finally {
+                btn.textContent = isLoginMode ? 'Entrar' : 'Registrar';
+                btn.disabled = false;
+            }
+        }
+
+        window.logout = function() {
+            if(confirm('¿Cerrar sesión?')) {
+                auth.signOut();
+            }
+        }
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        function playNotificationSound() {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') audioContext.resume();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.15);
+                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+                oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 0.6);
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            } catch (e) { console.log('Sonido no disponible:', e); }
+        }
+
+        function showNewOrderNotification(orderCount) {
+            let notification = document.getElementById('new-order-notification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'new-order-notification';
+                notification.style.cssText = `position: fixed; top: 20px; right: 20px; background: #25d366; color: white; padding: 1.5rem 2rem; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 9999; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.1rem; animation: slideIn 0.5s ease-out; display: flex; align-items: center; gap: 1rem;`;
+                document.body.appendChild(notification);
+            }
+            notification.innerHTML = `<span style="font-size: 2rem;">🔔</span><div><div>¡${orderCount} PEDIDO${orderCount > 1 ? 'S' : ''} NUEVO${orderCount > 1 ? 'S' : ''}!</div><div style="font-size: 0.85rem; font-weight: 400; opacity: 0.9;">Revisa la lista de pedidos</div></div>`;
+            playNotificationSound();
+            setTimeout(() => {
+                if (notification && notification.parentNode) {
+                    notification.style.opacity = '0'; notification.style.transition = 'opacity 0.5s';
+                    setTimeout(() => notification.remove(), 500);
+                }
+            }, 8000);
+        }
+
+        window.loadConfig = function() {
+            db.collection('usuarios').doc(storeOwnerId).collection('config').doc('tema').onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('user-email-display').textContent = (data.restaurantName || auth.currentUser.email) + (currentUserRole === 'admin' ? ' (Admin)' : ' (Empleado)');
+                    
+                    const isStoreOpen = data.storeOpen !== undefined ? data.storeOpen : true;
+                    document.getElementById('store-open-toggle').checked = isStoreOpen;
+                    document.getElementById('store-status-text').textContent = isStoreOpen ? 'Tienda: Abierta 🟢' : 'Tienda: Cerrada 🔴';
+
+                    document.getElementById('cfg-name').value = data.restaurantName || '';
+                    document.getElementById('cfg-tagline').value = data.tagline || '';
+                    document.getElementById('cfg-emoji').value = data.emoji || '🍽️';
+                    document.getElementById('cfg-primary').value = data.primaryColor || '#ff6b35';
+                    document.getElementById('cfg-secondary').value = data.secondaryColor || '#2c3e50';
+                    document.getElementById('cfg-background').value = data.backgroundColor || '#f8f9fa';
+                    document.getElementById('cfg-address').value = data.address || '';
+                    document.getElementById('cfg-hours').value = data.hours || '';
+                    document.getElementById('cfg-phone').value = data.phone || '';
+                    document.getElementById('cfg-logo-url').value = data.logo || '';
+                    if (data.logo) {
+                        document.getElementById('cfg-logo-preview').src = data.logo;
+                        document.getElementById('cfg-logo-preview').style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        document.getElementById('cfg-logo-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('cfg-logo-preview').src = e.target.result;
+                    document.getElementById('cfg-logo-preview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        window.saveConfig = async function() {
+            const btn = event.target;
+            btn.textContent = 'Guardando...'; btn.disabled = true;
+            const fileInput = document.getElementById('cfg-logo-file');
+            let logoUrl = document.getElementById('cfg-logo-url').value;
+            try {
+                if (fileInput.files.length > 0) {
+                    logoUrl = await window.uploadToCloudinary(fileInput.files[0], `config_${storeOwnerId}`);
+                }
+                await db.collection('usuarios').doc(storeOwnerId).collection('config').doc('tema').set({
+                    ownerId: storeOwnerId,
+                    restaurantName: document.getElementById('cfg-name').value,
+                    tagline: document.getElementById('cfg-tagline').value,
+                    emoji: document.getElementById('cfg-emoji').value || '🍽️',
+                    primaryColor: document.getElementById('cfg-primary').value,
+                    secondaryColor: document.getElementById('cfg-secondary').value,
+                    backgroundColor: document.getElementById('cfg-background').value,
+                    address: document.getElementById('cfg-address').value,
+                    hours: document.getElementById('cfg-hours').value,
+                    phone: document.getElementById('cfg-phone').value,
+                    logo: logoUrl
+                }, { merge: true });
+                btn.textContent = '💾 Guardar Toda la Configuración'; btn.disabled = false;
+                alert('✅ Configuración guardada.');
+            } catch (error) {
+                console.error(error);
+                btn.textContent = '💾 Guardar Toda la Configuración'; btn.disabled = false;
+                alert('Error al guardar: ' + error.message);
+            }
+        }
+
+        window.loadProducts = function() {
+            console.log("📦 Cargando productos del storeOwnerId:", storeOwnerId);
+            db.collection('usuarios').doc(storeOwnerId).collection('productos').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+                products = [];
+                snapshot.forEach((doc) => products.push({ id: doc.id, ...doc.data() }));
+                console.log("✅ Productos cargados:", products.length);
+                window.renderProducts();
+            });
+        }
+
+        window.renderProducts = function() {
+            const container = document.getElementById('products-container');
+            container.innerHTML = products.length === 0 ? '<p class="loading">No hay productos aún.</p>' : '';
+            products.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'product-card';
+                
+                const adminActions = currentUserRole === 'admin' 
+                    ? `<button class="btn-edit" onclick="window.editProduct('${p.id}')">✏️</button>
+                       <button class="btn-delete" onclick="window.deleteProduct('${p.id}')">🗑️</button>`
+                    : '';
+
+                div.innerHTML = `
+                    <img src="${p.image || 'https://via.placeholder.com/60?text=Foto'}" class="product-img" onerror="this.src='https://via.placeholder.com/60?text=Error'">
+                    <div class="product-info">
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-category">${p.category}</div>
+                        <div class="product-price">$${p.price}</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${p.available ? 'checked' : ''} onchange="window.toggleProduct('${p.id}', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    ${adminActions}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('prod-image-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('prod-image-preview').src = e.target.result;
+                    document.getElementById('prod-image-preview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        window.saveProduct = async function() {
+            const btn = document.getElementById('btn-save-product');
+            const editId = document.getElementById('edit-product-id').value;
+            const name = document.getElementById('prod-name').value;
+            const desc = document.getElementById('prod-desc').value;
+            const detailedDesc = document.getElementById('prod-detailed-desc').value;
+            const price = parseFloat(document.getElementById('prod-price').value);
+            const category = document.getElementById('prod-category').value;
+            const available = document.getElementById('prod-available').checked;
+            const fileInput = document.getElementById('prod-image-file');
+            let imageUrl = document.getElementById('prod-image-url').value;
+
+            if (!name || !price || !category) { alert('Por favor completa nombre, precio y categoría.'); return; }
+
+            btn.textContent = 'Subiendo y Guardando...'; btn.disabled = true;
+
+            try {
+                if (fileInput.files.length > 0) {
+                    imageUrl = await window.uploadToCloudinary(fileInput.files[0], `prod_${storeOwnerId}`);
+                } else if (!imageUrl) {
+                    imageUrl = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+                }
+
+                const productData = {
+                    ownerId: storeOwnerId,
+                    name, description: desc, detailedDescription: detailedDesc,
+                    price, category, image: imageUrl, available,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (editId) {
+                    await db.collection('usuarios').doc(storeOwnerId).collection('productos').doc(editId).update(productData);
+                } else {
+                    productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('usuarios').doc(storeOwnerId).collection('productos').add(productData);
+                }
+                window.cancelEdit();
+                alert('✅ Producto guardado correctamente.');
+            } catch (error) {
+                console.error(error);
+                alert('Error al guardar: ' + error.message);
+            }
+            btn.textContent = 'Guardar Producto'; btn.disabled = false;
+        }
+
+        window.editProduct = function(id) {
+            const p = products.find(x => x.id === id); if (!p) return;
+            document.getElementById('edit-product-id').value = p.id;
+            document.getElementById('prod-name').value = p.name;
+            document.getElementById('prod-desc').value = p.description || '';
+            document.getElementById('prod-detailed-desc').value = p.detailedDescription || '';
+            document.getElementById('prod-price').value = p.price;
+            document.getElementById('prod-category').value = p.category;
+            document.getElementById('prod-available').checked = p.available;
+            document.getElementById('prod-image-url').value = p.image || '';
+            if (p.image) {
+                document.getElementById('prod-image-preview').src = p.image;
+                document.getElementById('prod-image-preview').style.display = 'block';
+            }
+            document.getElementById('btn-save-product').textContent = 'Actualizar Producto';
+            document.getElementById('btn-cancel-edit').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.cancelEdit = function() {
+            document.getElementById('edit-product-id').value = '';
+            document.getElementById('prod-name').value = '';
+            document.getElementById('prod-desc').value = '';
+            document.getElementById('prod-detailed-desc').value = '';
+            document.getElementById('prod-price').value = '';
+            document.getElementById('prod-category').value = '';
+            document.getElementById('prod-available').checked = true;
+            document.getElementById('prod-image-file').value = '';
+            document.getElementById('prod-image-url').value = '';
+            document.getElementById('prod-image-preview').style.display = 'none';
+            document.getElementById('btn-save-product').textContent = 'Guardar Producto';
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+        }
+
+        window.toggleProduct = async function(id, isAvailable) {
+            await db.collection('usuarios').doc(storeOwnerId).collection('productos').doc(id).update({ available: isAvailable });
+        }
+
+        window.deleteProduct = async function(id) {
+            if (confirm('¿Eliminar este producto permanentemente?')) {
+                await db.collection('usuarios').doc(storeOwnerId).collection('productos').doc(id).delete();
+            }
+        }
+
+        window.loadOrders = function() {
+            db.collection('usuarios').doc(storeOwnerId).collection('pedidos').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
+                const previousNewCount = orders.filter(o => o.status === 'nuevo').length;
+                orders = [];
+                snapshot.forEach((doc) => orders.push({ id: doc.id, ...doc.data() }));
+                window.renderOrders();
+                
+                const currentNewCount = orders.filter(o => o.status === 'nuevo').length;
+                if (currentNewCount > previousNewCount && previousNewCount >= 0) {
+                    showNewOrderNotification(currentNewCount);
+                }
+            });
+        }
+
+        window.renderOrders = function() {
+            const container = document.getElementById('orders-container');
+            container.innerHTML = orders.length === 0 ? '<p class="loading" style="grid-column: 1 / -1;">No hay pedidos aún.</p>' : '';
+            
+            orders.forEach(o => {
+                const time = o.timestamp ? o.timestamp.toDate().toLocaleString('es-MX', {hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit'}) : 'Recién';
+                const itemsHTML = o.items.map(i => `<div class="order-item"><span>${i.quantity}x ${i.name}</span><span>$${i.subtotal}</span></div>`).join('');
+                
+                const div = document.createElement('div');
+                div.className = `order-card ${o.status}`;
+                div.innerHTML = `
+                    <div class="order-header">
+                        <div><strong>#${o.id.slice(-6).toUpperCase()}</strong><br><small>${time}</small></div>
+                        <span style="background: ${o.status === 'nuevo' ? '#25d366' : o.status === 'processing' ? '#f39c12' : '#95a5a6'}; color: white; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem;">
+                            ${o.status === 'nuevo' ? 'NUEVO' : o.status === 'processing' ? 'EN PROCESO' : 'COMPLETADO'}
+                        </span>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">👤 ${o.customerName} | 📍 ${o.tableNumber}</div>
+                    <div class="order-items">${itemsHTML}</div>
+                    ${o.notes ? `<div style="background: #fff3cd; padding: 0.5rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 0.5rem;">📝 ${o.notes}</div>` : ''}
+                    <div style="text-align: right; font-weight: 700; color: #25d366; font-size: 1.1rem; margin-bottom: 0.8rem;">Total: $${o.total}</div>
+                    <div class="order-actions">
+                        ${o.status === 'nuevo' ? `<button class="btn-action btn-process" onclick="window.updateOrderStatus('${o.id}', 'processing')">En proceso</button>` : ''}
+                        ${o.status === 'processing' ? `<button class="btn-action btn-complete" onclick="window.updateOrderStatus('${o.id}', 'completed')">Completado</button>` : ''}
+                        <button class="btn-action" style="background: #e74c3c;" onclick="window.deleteOrder('${o.id}')">Eliminar</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            window.updateStats();
+        }
+
+        window.updateStats = function() {
+            const newOrders = orders.filter(o => o.status === 'nuevo');
+            const processingOrders = orders.filter(o => o.status === 'processing');
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(o => {
+                if (!o.timestamp) return false;
+                return o.timestamp.toDate().toDateString() === today;
+            });
+            const totalSalesToday = todayOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+            const totalHistoricalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+            
+            document.getElementById('stat-new').textContent = newOrders.length;
+            document.getElementById('stat-processing').textContent = processingOrders.length;
+            document.getElementById('stat-sales').textContent = '$' + totalSalesToday.toLocaleString('es-MX');
+            document.getElementById('stat-historical').textContent = '$' + totalHistoricalSales.toLocaleString('es-MX');
+        }
+
+        window.openHistoricalModal = function() {
+            const modal = document.getElementById('historical-modal');
+            modal.style.display = 'flex';
+            const totalHistorical = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+            document.getElementById('modal-total').textContent = '$' + totalHistorical.toLocaleString('es-MX');
+            document.getElementById('modal-count').textContent = orders.length;
+            
+            const dailySales = {};
+            orders.forEach(order => {
+                if (!order.timestamp) return;
+                const date = order.timestamp.toDate();
+                const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                const displayDate = date.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const timeKey = date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                
+                if (!dailySales[dateKey]) dailySales[dateKey] = { total: 0, orders: [], displayDate: displayDate };
+                dailySales[dateKey].total += order.total || 0;
+                dailySales[dateKey].orders.push({ time: timeKey, customer: order.customerName, total: order.total });
+            });
+            
+            const container = document.getElementById('daily-breakdown');
+            container.innerHTML = '';
+            if (Object.keys(dailySales).length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No hay ventas registradas aún.</p>';
+                return;
+            }
+            
+            Object.keys(dailySales).sort((a, b) => new Date(b) - new Date(a)).forEach(dateKey => {
+                const dayData = dailySales[dateKey];
+                const ordersHTML = dayData.orders.map(o => `<div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem;"><span>🕐 ${o.time} - ${o.customer}</span><span style="font-weight: 600; color: #25d366;">$${o.total}</span></div>`).join('');
+                const dayDiv = document.createElement('div');
+                dayDiv.style.cssText = 'background: #f8f9fa; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #ff6b35;';
+                dayDiv.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;"><h4 style="text-transform: capitalize; color: #2c3e50; margin: 0;">${dayData.displayDate}</h4><span style="background: #25d366; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">$${dayData.total.toLocaleString('es-MX')}</span></div><div style="font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">${dayData.orders.length} pedido${dayData.orders.length > 1 ? 's' : ''}</div>${ordersHTML}`;
+                container.appendChild(dayDiv);
+            });
+        }
+
+        window.closeHistoricalModal = function() { document.getElementById('historical-modal').style.display = 'none'; }
+        document.addEventListener('click', function(e) { if (e.target.id === 'historical-modal') window.closeHistoricalModal(); });
+
+        window.updateOrderStatus = async function(id, status) {
+            await db.collection('usuarios').doc(storeOwnerId).collection('pedidos').doc(id).update({ status });
+        }
+
+        window.deleteOrder = async function(id) {
+            if (confirm('¿Eliminar este pedido?')) await db.collection('usuarios').doc(storeOwnerId).collection('pedidos').doc(id).delete();
+        }
+
+        window.uploadToCloudinary = async function(file, folderPrefix = '') {
+            const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+            if (folderPrefix) formData.append("public_id", `${folderPrefix}/${Date.now()}`);
+            
+            const response = await fetch(url, { method: "POST", body: formData });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+            return data.secure_url;
+        }
+
+        window.copyStoreLink = function() {
+            const baseUrl = window.location.href.replace('admin.html', 'index.html');
+            const storeLink = `${baseUrl}?user=${storeOwnerId}`;
+            
+            navigator.clipboard.writeText(storeLink).then(() => {
+                const btn = document.getElementById('btn-copy-link');
+                const originalText = btn.textContent;
+                
+                btn.textContent = '✅ ¡Link Copiado!';
+                btn.style.background = '#25d366';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#0047AB';
+                }, 2500);
+                
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+                alert('Tu link es: ' + storeLink);
+            });
+        }
+
+        window.toggleStoreStatus = async function(isOpen) {
+            const statusText = document.getElementById('store-status-text');
+            statusText.textContent = isOpen ? 'Tienda: Abierta 🟢' : 'Tienda: Cerrada 🔴';
+            
+            try {
+                await db.collection('usuarios').doc(storeOwnerId).collection('config').doc('tema').set({
+                    storeOpen: isOpen
+                }, { merge: true });
+                console.log('Estado de la tienda actualizado:', isOpen);
+            } catch (error) {
+                console.error('Error al actualizar estado:', error);
+                alert('Error al cambiar el estado de la tienda');
+                document.getElementById('store-open-toggle').checked = !isOpen;
+                statusText.textContent = !isOpen ? 'Tienda: Abierta 🟢' : 'Tienda: Cerrada 🔴';
+            }
+        }
+
+        // ✅ CORRECCIÓN: Usar storeOwnerId en lugar de currentUserId
+        window.loadEmployees = function() {
+            console.log("👥 Cargando empleados del admin. storeOwnerId:", storeOwnerId, "currentUserId:", currentUserId);
+            db.collection('usuarios').where('role', '==', 'empleado').where('ownerId', '==', storeOwnerId).onSnapshot((snapshot) => {
+                employees = [];
+                snapshot.forEach((doc) => employees.push({ id: doc.id, ...doc.data() }));
+                console.log("✅ Empleados cargados:", employees.length);
+                window.renderEmployees();
+            });
+        }
+
+        window.renderEmployees = function() {
+            const container = document.getElementById('employees-container');
+            container.innerHTML = employees.length === 0 ? '<p class="loading">No hay empleados registrados.</p>' : '';
+            
+            employees.forEach(emp => {
+                const div = document.createElement('div');
+                div.className = 'employee-card';
+                div.innerHTML = `
+                    <div class="employee-info">
+                        <span class="employee-name">${emp.name || 'Sin nombre'}</span>
+                        <span class="employee-email">${emp.email}</span>
+                    </div>
+                    <button class="btn-delete" onclick="window.deleteEmployee('${emp.id}', '${emp.email}')">🗑️ Eliminar</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ✅ CORRECCIÓN: Usar storeOwnerId y agregar logs
+        window.createEmployee = async function() {
+            const name = document.getElementById('emp-name').value.trim();
+            const email = document.getElementById('emp-email').value.trim();
+            const password = document.getElementById('emp-password').value;
+
+            if (!name || !email || !password) {
+                alert('Por favor completa todos los campos.');
+                return;
+            }
+            if (password.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres.');
+                return;
+            }
+
+            console.log("🛠️ Iniciando creación de empleado. storeOwnerId:", storeOwnerId, "currentUserId:", currentUserId);
+
+            if (confirm('⚠️ IMPORTANTE: Para crear esta cuenta, el sistema cerrará tu sesión actual por seguridad. Deberás volver a iniciar sesión como Administrador después. ¿Continuar?')) {
+                try {
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const newUid = userCredential.user.uid;
+                    
+                    console.log("📝 Guardando empleado en Firestore con ownerId:", storeOwnerId);
+                    
+                    await db.collection('usuarios').doc(newUid).set({
+                        name: name,
+                        email: email,
+                        role: 'empleado',
+                        ownerId: storeOwnerId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    console.log("✅ Empleado creado exitosamente. UID:", newUid, "ownerId:", storeOwnerId);
+
+                    await auth.signOut();
+                    
+                    alert('✅ Empleado creado exitosamente. Por favor, inicia sesión nuevamente como Administrador.');
+                    window.toggleAuthMode();
+                } catch (error) {
+                    console.error("❌ Error al crear empleado:", error);
+                    let msg = 'Error al crear empleado.';
+                    if (error.code === 'auth/email-already-in-use') msg = 'Este correo ya está registrado.';
+                    if (error.code === 'auth/weak-password') msg = 'La contraseña debe tener al menos 6 caracteres.';
+                    alert(msg);
+                }
+            }
+        }
+
+        window.deleteEmployee = async function(empId, empEmail) {
+            if (confirm(`¿Estás seguro de eliminar al empleado ${empEmail}? Esta acción no se puede deshacer.`)) {
+                try {
+                    await db.collection('usuarios').doc(empId).delete();
+                    alert('✅ Empleado eliminado del sistema.');
+                } catch (error) {
+                    console.error(error);
+                    alert('Error al eliminar: ' + error.message);
+                }
+            }
+        }
+    </script>
+    
+    <button id="install-btn-admin" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #2c3e50; color: white; border: none; padding: 1rem 1.5rem; border-radius: 50px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 9999; font-family: 'Poppins', sans-serif;">📲 Instalar Panel</button>
+    <script>
+        let deferredPromptAdmin; const installBtnAdmin = document.getElementById('install-btn-admin');
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPromptAdmin = e; installBtnAdmin.style.display = 'block'; });
+        installBtnAdmin.addEventListener('click', async () => {
+            if (deferredPromptAdmin) {
+                deferredPromptAdmin.prompt();
+                const { outcome } = await deferredPromptAdmin.userChoice;
+                if (outcome === 'accepted') installBtnAdmin.style.display = 'none';
+                deferredPromptAdmin = null;
+            }
+        });
+    </script>
+</body>
+</html>

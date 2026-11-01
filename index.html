@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Digital</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0047AB">
+    <link rel="icon" href="./logo.png" id="dynamic-favicon">
+    <link rel="apple-touch-icon" href="./logo.png" id="dynamic-apple-icon">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0047AB;
+            --secondary-color: #2c3e50;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --text-light: #666666;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); color: var(--text-color); line-height: 1.6; padding-bottom: 100px; }
+        .header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; text-align: center; padding: 2rem 1rem; }
+        .logo { font-size: 3rem; margin-bottom: 0.5rem; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+        .logo img { max-width: 100px; max-height: 100px; border-radius: 50%; background: white; padding: 5px; }
+        .restaurant-name { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .tagline { font-size: 1rem; opacity: 0.9; }
+        .categories-nav { display: flex; overflow-x: auto; gap: 0.5rem; padding: 1rem; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .category-btn { padding: 0.5rem 1rem; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); border-radius: 20px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.3s; font-family: 'Poppins', sans-serif; }
+        .category-btn.active, .category-btn:hover { background: var(--primary-color); color: white; }
+        .menu-container { padding: 1rem; max-width: 1200px; margin: 0 auto; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .menu-item { background: var(--card-background); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s; position: relative; }
+        .menu-item:hover { transform: translateY(-5px); }
+        .menu-item.unavailable { opacity: 0.6; }
+        .menu-item.unavailable .menu-item-image { filter: grayscale(100%); }
+        
+        .menu-item-image { width: 100%; height: 220px; object-fit: cover; object-position: center top; cursor: pointer; transition: transform 0.2s; }
+        .menu-item-image:hover { transform: scale(1.03); }
+        
+        .menu-item-content { padding: 1rem; }
+        .menu-item-category { font-size: 0.75rem; color: var(--primary-color); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .menu-item-name { font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0; color: var(--secondary-color); }
+        .menu-item-description { font-size: 0.9rem; color: var(--text-light); margin-bottom: 1rem; }
+        .menu-item-footer { display: flex; justify-content: space-between; align-items: center; }
+        .menu-item-price { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
+        .quantity-controls { display: flex; align-items: center; gap: 0.5rem; }
+        .qty-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); font-weight: 700; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; }
+        .qty-btn:hover { background: var(--primary-color); color: white; }
+        .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .qty-number { font-weight: 700; min-width: 24px; text-align: center; }
+        
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--secondary-color); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -4px 15px rgba(0,0,0,0.2); z-index: 1000; transform: translateY(100%); transition: transform 0.3s; }
+        .cart-bar.visible { transform: translateY(0); }
+        .cart-info { display: flex; flex-direction: column; }
+        .cart-count { font-weight: 700; font-size: 1.1rem; }
+        .cart-total { font-size: 0.9rem; opacity: 0.9; }
+        .checkout-btn { background: #25d366; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 50px; font-weight: 700; cursor: pointer; font-size: 1rem; font-family: 'Poppins', sans-serif; }
+        .checkout-btn:hover { background: #128c7e; }
+        
+        .footer { background: var(--secondary-color); color: white; text-align: center; padding: 2rem 1rem; margin-top: 2rem; }
+        .success-message { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 2000; text-align: center; display: none; width: 90%; max-width: 400px; }
+        .success-message.show { display: block; }
+        .success-message h2 { color: #25d366; margin-bottom: 1rem; }
+        .agotado-badge { position: absolute; top: 10px; right: 10px; background: #e74c3c; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; z-index: 10; }
+        .loading-message { text-align: center; padding: 3rem; color: #666; font-size: 1.1rem; }
+        
+        .product-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(5px); }
+        .product-modal.show { display: flex; }
+        .product-modal-content { background: white; border-radius: 15px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-close-btn { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .modal-image { width: 100%; height: 300px; object-fit: cover; border-radius: 15px 15px 0 0; }
+        .modal-body { padding: 1.5rem; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 0.5rem; }
+        .modal-price { font-size: 1.8rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem; }
+        .modal-detailed-desc { font-size: 1rem; color: var(--text-light); line-height: 1.6; margin-bottom: 1.5rem; white-space: pre-line; }
+        .modal-add-btn { width: 100%; background: var(--primary-color); color: white; border: none; padding: 1rem; border-radius: 10px; font-weight: 700; font-size: 1.1rem; cursor: pointer; font-family: 'Poppins', sans-serif; transition: background 0.2s; }
+        .modal-add-btn:hover { background: #e55a2b; }
+        .modal-add-btn:disabled { background: #95a5a6; cursor: not-allowed; }
+
+        .error-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; color: white; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; font-family: 'Poppins', sans-serif; }
+
+        @media (max-width: 768px) { 
+            .menu-grid { grid-template-columns: 1fr; }
+            .modal-image { height: auto; max-height: 60vh; object-fit: contain; background-color: #f8f9fa; border-radius: 15px 15px 0 0; }
+            .product-modal-content { max-height: 95vh; margin: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- PANTALLA DE ERROR SI NO HAY USUARIO EN LA URL -->
+    <div id="error-screen" class="error-screen" style="display: none;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🚧</div>
+        <h1 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">Tienda no encontrada</h1>
+        <p style="font-size: 1.1rem; max-width: 500px; margin-bottom: 2rem; line-height: 1.6; opacity: 0.9;">
+            El enlace que estás visitando no es válido o la tienda aún no está configurada.
+        </p>
+    </div>
+
+    <!-- ✅ NUEVO: PANTALLA DE TIENDA CERRADA -->
+    <div id="closed-screen" class="error-screen" style="display: none;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🌙</div>
+        <h1 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">Estamos temporalmente cerrados</h1>
+        <p style="font-size: 1.1rem; max-width: 500px; margin-bottom: 2rem; line-height: 1.6; opacity: 0.9;" id="closed-message">
+            En este momento no estamos recibiendo pedidos.
+        </p>
+        <a id="closed-whatsapp-btn" href="#" target="_blank" style="background: #25d366; color: white; padding: 1rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none;">
+            💬 Contactar por WhatsApp
+        </a>
+    </div>
+
+    <header class="header" id="main-header">
+        <div class="logo" id="restaurant-logo"></div>
+        <h1 class="restaurant-name" id="restaurant-name">Cargando...</h1>
+        <p class="tagline" id="restaurant-tagline">Bienvenido a nuestra Tienda Digital</p>
+    </header>
+
+    <nav class="categories-nav" id="categories-nav">
+        <button class="category-btn active" onclick="window.filterCategory('todos')">Todos</button>
+    </nav>
+
+    <main class="menu-container" id="main-container">
+        <div id="loading" class="loading-message">Cargando catálogo...</div>
+        <div id="menu-grid" class="menu-grid"></div>
+    </main>
+
+    <div class="cart-bar" id="cart-bar">
+        <div class="cart-info">
+            <span class="cart-count" id="cart-count">0 productos</span>
+            <span class="cart-total" id="cart-total">Total: $0</span>
+        </div>
+        <button class="checkout-btn" onclick="window.openCheckout()">Ver pedido 🛒</button>
+    </div>
+
+    <div class="success-message" id="success-message">
+        <h2>✅ ¡Pedido Enviado!</h2>
+        <p>Tu pedido ha sido recibido.</p>
+        <button onclick="window.closeSuccess()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 20px; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600;">Cerrar</button>
+    </div>
+
+    <footer class="footer" id="main-footer">
+        <p id="footer-address">📍 Dirección</p>
+        <p id="footer-hours">🕐 Horario de atención</p>
+        <p id="footer-phone">📞 Teléfono de contacto</p>
+    </footer>
+
+    <div id="product-modal" class="product-modal" onclick="window.closeProductModal(event)">
+        <div class="product-modal-content">
+            <button class="modal-close-btn" onclick="window.closeProductModal()">✕</button>
+            <img id="modal-img" src="" alt="" class="modal-image">
+            <div class="modal-body">
+                <h2 id="modal-title" class="modal-title"></h2>
+                <div id="modal-price" class="modal-price"></div>
+                <p id="modal-detailed-desc" class="modal-detailed-desc"></p>
+                <button id="modal-add-btn" class="modal-add-btn" onclick="window.addToCartFromModal()">Agregar al Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="install-btn" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #0047AB; color: white; border: none; padding: 1rem 1.5rem; border-radius: 50px; font-weight: 700; font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 9999; font-family: 'Poppins', sans-serif;">
+        📲 Instalar App
+    </button>
+
+    <a id="whatsapp-support-btn" href="#" target="_blank" style="display: none; position: fixed; bottom: 20px; left: 20px; background: #25d366; color: white; width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 998; align-items: center; justify-content: center; text-decoration: none; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white">
+            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+        </svg>
+    </a>
+
+    <script>
+        // 1. OBTENER EL UID DEL USUARIO DESDE LA URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentUserId = urlParams.get('user');
+
+        if (!currentUserId) {
+            document.getElementById('error-screen').style.display = 'flex';
+            document.getElementById('main-header').style.display = 'none';
+            document.getElementById('main-container').style.display = 'none';
+            document.getElementById('main-footer').style.display = 'none';
+        } else {
+            // 2. INICIALIZAR FIREBASE
+            const firebaseConfig = {
+                apiKey: "AIzaSyAAgryOgzuaKQw8s2APP4ezc4k6igHRUmM",
+                authDomain: "tienda-digital-32a30.firebaseapp.com",
+                projectId: "tienda-digital-32a30",
+                storageBucket: "tienda-digital-32a30.firebasestorage.app",
+                messagingSenderId: "989141190509",
+                appId: "1:989141190509:web:08dcb840d3c5ed79f47c64"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+
+            let menuData = [];
+            let cart = {};
+            let currentCategory = 'todos';
+            let currentModalProductId = null;
+
+            // ✅ MOVIDO AQUÍ: Para que esté disponible en el onSnapshot de Firebase
+            let deferredPrompt;
+            const installBtn = document.getElementById('install-btn');
+
+            // 3. CARGAR CONFIGURACIÓN Y ESTADO DE LA TIENDA
+            db.collection('usuarios').doc(currentUserId).collection('config').doc('tema').onSnapshot((doc) => {
+                if (doc.exists) {
+                    const config = doc.data();
+                    
+                    // ✅ NUEVO: Verificar si la tienda está abierta o cerrada
+                    const isStoreOpen = config.storeOpen !== undefined ? config.storeOpen : true;
+                    
+                    if (!isStoreOpen) {
+                        // Mostrar pantalla de cerrado y ocultar el contenido de la tienda
+                        document.getElementById('closed-screen').style.display = 'flex';
+                        document.getElementById('main-header').style.display = 'none';
+                        document.getElementById('categories-nav').style.display = 'none';
+                        document.getElementById('main-container').style.display = 'none';
+                        document.getElementById('cart-bar').style.display = 'none';
+                        document.getElementById('main-footer').style.display = 'none';
+                        document.getElementById('whatsapp-support-btn').style.display = 'none';
+                        document.getElementById('install-btn').style.display = 'none';
+                        
+                        if (config.hours) {
+                            document.getElementById('closed-message').innerHTML = `En este momento no estamos recibiendo pedidos.<br><br><strong>Horario de atención:</strong><br>${config.hours}`;
+                        }
+                        if (config.phone) {
+                            const cleanPhone = config.phone.replace(/\D/g, '');
+                            const message = encodeURIComponent("Hola, vi que la tienda está cerrada pero tengo una consulta.");
+                            document.getElementById('closed-whatsapp-btn').href = `https://wa.me/${cleanPhone}?text=${message}`;
+                            document.getElementById('closed-whatsapp-btn').style.display = 'inline-block';
+                        } else {
+                            document.getElementById('closed-whatsapp-btn').style.display = 'none';
+                        }
+                    } else {
+                        // Restaurar la vista normal de la tienda
+                        document.getElementById('closed-screen').style.display = 'none';
+                        document.getElementById('main-header').style.display = '';
+                        document.getElementById('categories-nav').style.display = '';
+                        document.getElementById('main-container').style.display = '';
+                        document.getElementById('main-footer').style.display = '';
+                        
+                        // Estos elementos se controlan por su propia lógica, los restablecemos para que funcionen normal
+                        document.getElementById('cart-bar').style.display = ''; 
+                        window.updateCartBar(); // Para que decida si mostrarlo o no según el carrito
+                        
+                        // ✅ CORRECCIÓN: Respetar el estado del botón de instalación
+                        if (deferredPrompt) {
+                            installBtn.style.display = 'block';
+                        } else {
+                            installBtn.style.display = 'none';
+                        }
+                        
+                        document.getElementById('whatsapp-support-btn').style.display = 'none'; // Se mostrará abajo si hay teléfono
+
+                        const root = document.documentElement;
+                        if (config.primaryColor) root.style.setProperty('--primary-color', config.primaryColor);
+                        if (config.secondaryColor) root.style.setProperty('--secondary-color', config.secondaryColor);
+                        if (config.backgroundColor) root.style.setProperty('--background-color', config.backgroundColor);
+                        if (config.primaryColor) document.querySelector('meta[name="theme-color"]').content = config.primaryColor;
+                        
+                        if (config.restaurantName) document.getElementById('restaurant-name').textContent = config.restaurantName;
+                        if (config.tagline) document.getElementById('restaurant-tagline').textContent = config.tagline;
+                        
+                        const logoElement = document.getElementById('restaurant-logo');
+                        if (config.logo) {
+                            logoElement.innerHTML = `<img src="${config.logo}" alt="Logo">`;
+                            document.getElementById('dynamic-favicon').href = config.logo;
+                            document.getElementById('dynamic-apple-icon').href = config.logo;
+                        } else if (config.emoji) {
+                            logoElement.textContent = config.emoji;
+                        }
+                        
+                        if (config.address) document.getElementById('footer-address').textContent = '📍 ' + config.address;
+                        if (config.hours) document.getElementById('footer-hours').textContent = '🕐 ' + config.hours;
+                        if (config.phone) document.getElementById('footer-phone').textContent = '📞 ' + config.phone;
+                        
+                        const whatsappBtn = document.getElementById('whatsapp-support-btn');
+                        if (config.phone) {
+                            const cleanPhone = config.phone.replace(/\D/g, ''); 
+                            const message = encodeURIComponent("Hola, tengo una duda o necesito asistencia con mi pedido.");
+                            whatsappBtn.href = `https://wa.me/${cleanPhone}?text=${message}`;
+                            whatsappBtn.style.display = 'flex';
+                        } else {
+                            whatsappBtn.style.display = 'none';
+                        }
+                    }
+                }
+            });
+
+            // 4. CARGAR PRODUCTOS
+            db.collection('usuarios').doc(currentUserId).collection('productos').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+                menuData = [];
+                const categories = new Set(['todos']);
+                
+                snapshot.forEach((doc) => {
+                    const product = { id: doc.id, ...doc.data() };
+                    // ✅ CORRECCIÓN: Asegurar que 'available' siempre sea un booleano
+                    if (product.available === undefined) product.available = true;
+                    
+                    if (product.category) {
+                        const cleanCat = product.category.trim();
+                        product.category = cleanCat.charAt(0).toUpperCase() + cleanCat.slice(1).toLowerCase();
+                    } else {
+                        product.category = 'Sin categoría';
+                    }
+                    menuData.push(product);
+                    categories.add(product.category);
+                });
+
+                renderCategories(Array.from(categories));
+                document.getElementById('loading').style.display = 'none';
+                renderMenu();
+            });
+
+            function renderCategories(categories) {
+                const nav = document.getElementById('categories-nav');
+                nav.innerHTML = categories.map(cat => 
+                    `<button class="category-btn ${cat === currentCategory ? 'active' : ''}" onclick="window.filterCategory('${cat}')">${cat}</button>`
+                ).join('');
+            }
+
+            // ✅ FUNCIONES GLOBALES (window.) para que el HTML pueda encontrarlas sin errores
+            window.filterCategory = function(category) {
+                currentCategory = category;
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    const btnText = btn.textContent;
+                    const isActive = (category === 'todos' && btnText === 'Todos') || btnText === category;
+                    btn.classList.toggle('active', isActive);
+                });
+                renderMenu();
+            }
+
+            function renderMenu() {
+                const menuGrid = document.getElementById('menu-grid');
+                menuGrid.innerHTML = '';
+                
+                const filteredItems = currentCategory === 'todos' 
+                    ? menuData 
+                    : menuData.filter(item => item.category === currentCategory);
+                
+                filteredItems.forEach(item => {
+                    const qty = cart[item.id] ? cart[item.id].qty : 0;
+                    const isUnavailable = !item.available;
+                    
+                    const menuItem = document.createElement('div');
+                    menuItem.className = `menu-item ${isUnavailable ? 'unavailable' : ''}`;
+                    menuItem.innerHTML = `
+                        ${isUnavailable ? '<div class="agotado-badge">AGOTADO</div>' : ''}
+                        <img src="${item.image}" alt="${item.name}" class="menu-item-image" onclick="window.openProductModal('${item.id}')" onerror="this.src='https://via.placeholder.com/400x300?text=Sin+Imagen'">
+                        <div class="menu-item-content">
+                            <span class="menu-item-category">${item.category}</span>
+                            <h3 class="menu-item-name">${item.name}</h3>
+                            <p class="menu-item-description">${item.description || ''}</p>
+                            <div class="menu-item-footer">
+                                <span class="menu-item-price">$${item.price}</span>
+                                ${isUnavailable 
+                                    ? '<span style="color: #e74c3c; font-weight: 600; font-size: 0.9rem;">No disponible</span>'
+                                    : `<div class="quantity-controls">
+                                        <button class="qty-btn" onclick="window.updateCart('${item.id}', -1)">−</button>
+                                        <span class="qty-number" id="qty-${item.id}">${qty}</span>
+                                        <button class="qty-btn" onclick="window.updateCart('${item.id}', 1)">+</button>
+                                      </div>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                    menuGrid.appendChild(menuItem);
+                });
+            }
+
+            window.updateCart = function(id, change) {
+                console.log(`🛒 Intentando actualizar carrito. ID: ${id}, Cambio: ${change}`);
+                const item = menuData.find(p => p.id === id);
+                
+                if (!item) {
+                    console.error("❌ Producto no encontrado en menuData con ID:", id);
+                    return;
+                }
+                if (!item.available) {
+                    console.warn("⚠️ Producto no disponible:", item.name);
+                    return;
+                }
+                
+                if (!cart[id]) cart[id] = { ...item, qty: 0 };
+                cart[id].qty += change;
+                
+                if (cart[id].qty <= 0) {
+                    delete cart[id];
+                }
+                
+                console.log("✅ Carrito actualizado:", cart);
+                
+                const qtyElement = document.getElementById(`qty-${id}`);
+                if (qtyElement) qtyElement.textContent = cart[id] ? cart[id].qty : 0;
+                
+                window.updateCartBar();
+            }
+
+            window.updateCartBar = function() {
+                const cartBar = document.getElementById('cart-bar');
+                const cartCount = document.getElementById('cart-count');
+                const cartTotal = document.getElementById('cart-total');
+                const items = Object.values(cart);
+                const totalQty = items.reduce((sum, item) => sum + item.qty, 0);
+                const totalPrice = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                
+                console.log("📊 Barra del carrito - Cantidad:", totalQty, "Total:", totalPrice);
+                
+                if (totalQty > 0) {
+                    cartBar.classList.add('visible');
+                    cartCount.textContent = `${totalQty} producto${totalQty > 1 ? 's' : ''}`;
+                    cartTotal.textContent = `Total: $${totalPrice}`;
+                } else {
+                    cartBar.classList.remove('visible');
+                }
+            }
+
+            window.openCheckout = async function() {
+                const items = Object.values(cart);
+                console.log("🛒 Estado del carrito al hacer checkout:", cart);
+                console.log("📦 Items a enviar:", items);
+                
+                if (items.length === 0) {
+                    alert("⚠️ Tu carrito está vacío.\n\nPor favor, agrega al menos un producto antes de realizar el pedido.");
+                    return;
+                }
+                
+                const customerName = prompt("¿Cuál es tu nombre?");
+                if (!customerName) return;
+                
+                const tableNumber = prompt("¿Número de mesa o dirección de entrega?");
+                if (!tableNumber) return;
+                
+                const notes = prompt("¿Alguna nota especial? (opcional, presiona Cancelar para omitir)") || "";
+                
+                let total = 0;
+                items.forEach(item => { total += item.price * item.qty; });
+
+                const order = {
+                    ownerId: currentUserId,
+                    customerName: customerName,
+                    tableNumber: tableNumber,
+                    notes: notes,
+                    items: items.map(item => ({
+                        name: item.name,
+                        quantity: item.qty,
+                        price: item.price,
+                        subtotal: item.price * item.qty
+                    })),
+                    total: total,
+                    status: 'nuevo',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                try {
+                    console.log("📤 Intentando guardar pedido para el usuario:", currentUserId);
+                    await db.collection('usuarios').doc(currentUserId).collection('pedidos').add(order);
+                    
+                    document.getElementById('success-message').classList.add('show');
+                    cart = {};
+                    window.updateCartBar();
+                    renderMenu();
+                } catch (error) {
+                    console.error("❌ Error de Firebase al guardar:", error);
+                    alert('❌ Error al enviar el pedido: ' + error.message);
+                }
+            }
+
+            window.closeSuccess = function() {
+                document.getElementById('success-message').classList.remove('show');
+            }
+
+            window.openProductModal = function(id) {
+                const item = menuData.find(p => p.id === id);
+                if (!item) return;
+                
+                currentModalProductId = id;
+                document.getElementById('modal-img').src = item.image;
+                document.getElementById('modal-title').textContent = item.name;
+                document.getElementById('modal-price').textContent = '$' + item.price;
+                
+                const detailedDesc = item.detailedDescription || item.description || "Sin descripción detallada disponible.";
+                document.getElementById('modal-detailed-desc').textContent = detailedDesc;
+                
+                const addBtn = document.getElementById('modal-add-btn');
+                if (!item.available) {
+                    addBtn.textContent = "Producto Agotado";
+                    addBtn.disabled = true;
+                } else {
+                    addBtn.textContent = "Agregar al Pedido";
+                    addBtn.disabled = false;
+                }
+                
+                document.getElementById('product-modal').classList.add('show');
+            }
+
+            window.closeProductModal = function(event) {
+                if (event && event.target.closest('.product-modal-content')) return;
+                document.getElementById('product-modal').classList.remove('show');
+                currentModalProductId = null;
+            }
+
+            window.addToCartFromModal = function() {
+                if (currentModalProductId) {
+                    window.updateCart(currentModalProductId, 1);
+                    window.closeProductModal();
+                }
+            }
+
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
+            }
+
+            // ✅ El evento ahora usa las variables declaradas arriba
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installBtn.style.display = 'block';
+            });
+
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installBtn.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
