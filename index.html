@@ -85,6 +85,22 @@
         .modal-add-btn:hover { background: #e55a2b; }
         .modal-add-btn:disabled { background: #95a5a6; cursor: not-allowed; }
 
+        /* ✅ NUEVO: Estilos para el modal de personalización */
+        .customization-option { margin-bottom: 1.5rem; }
+        .customization-option h4 { font-size: 1rem; font-weight: 600; color: var(--secondary-color); margin-bottom: 0.8rem; }
+        .option-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .option-btn { flex: 1; min-width: 120px; padding: 0.8rem; border: 2px solid #ddd; background: white; border-radius: 25px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: 'Poppins', sans-serif; font-size: 0.9rem; }
+        .option-btn.selected { background: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+        .option-btn:hover { border-color: var(--primary-color); }
+        .custom-instructions { margin-top: 1.5rem; }
+        .custom-instructions textarea { width: 100%; padding: 1rem; border: 2px solid #ddd; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 0.9rem; resize: vertical; min-height: 80px; }
+        .custom-instructions textarea:focus { outline: none; border-color: var(--primary-color); }
+        .modal-footer-actions { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1.5rem; }
+        .btn-add-to-cart { background: #ff6b35; color: white; border: none; padding: 1rem; border-radius: 10px; font-weight: 700; font-size: 1.1rem; cursor: pointer; font-family: 'Poppins', sans-serif; transition: background 0.2s; }
+        .btn-add-to-cart:hover { background: #e55a2b; }
+        .btn-add-and-view { background: white; color: var(--text-color); border: 2px solid #ddd; padding: 0.8rem; border-radius: 10px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: all 0.2s; }
+        .btn-add-and-view:hover { border-color: var(--primary-color); background: #f8f9fa; }
+
         .error-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; color: white; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; font-family: 'Poppins', sans-serif; }
 
         @media (max-width: 768px) { 
@@ -106,13 +122,13 @@
 
     <!-- ✅ NUEVO: PANTALLA DE TIENDA CERRADA -->
     <div id="closed-screen" class="error-screen" style="display: none;">
-        <div style="font-size: 4rem; margin-bottom: 1rem;">🌙</div>
+        <div style="font-size: 4rem; margin-bottom: 1rem;"></div>
         <h1 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">Estamos temporalmente cerrados</h1>
         <p style="font-size: 1.1rem; max-width: 500px; margin-bottom: 2rem; line-height: 1.6; opacity: 0.9;" id="closed-message">
             En este momento no estamos recibiendo pedidos.
         </p>
         <a id="closed-whatsapp-btn" href="#" target="_blank" style="background: #25d366; color: white; padding: 1rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none;">
-            💬 Contactar por WhatsApp
+             Contactar por WhatsApp
         </a>
     </div>
 
@@ -150,7 +166,7 @@
             <span class="cart-count" id="cart-count">0 productos</span>
             <span class="cart-total" id="cart-total">Total: $0</span>
         </div>
-        <button class="checkout-btn" onclick="window.openCheckout()">Ver pedido 🛒</button>
+        <button class="checkout-btn" onclick="window.openCheckout()">Ver pedido </button>
     </div>
 
     <div class="success-message" id="success-message">
@@ -165,6 +181,7 @@
         <p id="footer-phone">📞 Teléfono de contacto</p>
     </footer>
 
+    <!-- Modal de producto existente -->
     <div id="product-modal" class="product-modal" onclick="window.closeProductModal(event)">
         <div class="product-modal-content">
             <button class="modal-close-btn" onclick="window.closeProductModal()">✕</button>
@@ -174,6 +191,31 @@
                 <div id="modal-price" class="modal-price"></div>
                 <p id="modal-detailed-desc" class="modal-detailed-desc"></p>
                 <button id="modal-add-btn" class="modal-add-btn" onclick="window.addToCartFromModal()">Agregar al Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ NUEVO: Modal de personalización de productos -->
+    <div id="customization-modal" class="product-modal" onclick="window.closeCustomizationModal(event)">
+        <div class="product-modal-content" style="max-width: 600px;">
+            <button class="modal-close-btn" onclick="window.closeCustomizationModal()">✕</button>
+            <div class="modal-body">
+                <h2 id="custom-modal-title" class="modal-title"></h2>
+                <div id="custom-modal-price" class="modal-price"></div>
+                
+                <div id="customization-options">
+                    <!-- Las opciones se generarán dinámicamente -->
+                </div>
+                
+                <div class="custom-instructions">
+                    <h4 style="font-size: 1rem; font-weight: 600; color: var(--secondary-color); margin-bottom: 0.8rem;">Indicaciones</h4>
+                    <textarea id="custom-instructions-text" placeholder="Sin chile, extra limón..."></textarea>
+                </div>
+                
+                <div class="modal-footer-actions">
+                    <button class="btn-add-to-cart" onclick="window.addCustomizedProductToCart()">Agregar · <span id="custom-total-price">$0</span></button>
+                    <button class="btn-add-and-view" onclick="window.addCustomizedProductAndView()">Agregar y ver pedido</button>
+                </div>
             </div>
         </div>
     </div>
@@ -254,6 +296,7 @@
             let cart = {};
             let currentCategory = 'todos';
             let currentModalProductId = null;
+            let currentCustomization = {}; // ✅ NUEVO: Para guardar personalizaciones
 
             // ✅ MOVIDO AQUÍ: Para que esté disponible en el onSnapshot de Firebase
             let deferredPrompt;
@@ -329,7 +372,7 @@
                         }
                         
                         if (config.address) document.getElementById('footer-address').textContent = '📍 ' + config.address;
-                        if (config.hours) document.getElementById('footer-hours').textContent = '🕐 ' + config.hours;
+                        if (config.hours) document.getElementById('footer-hours').textContent = ' ' + config.hours;
                         if (config.phone) document.getElementById('footer-phone').textContent = '📞 ' + config.phone;
                         
                         const whatsappBtn = document.getElementById('whatsapp-support-btn');
@@ -427,11 +470,11 @@
             }
 
             window.updateCart = function(id, change) {
-                console.log(`🛒 Intentando actualizar carrito. ID: ${id}, Cambio: ${change}`);
+                console.log(` Intentando actualizar carrito. ID: ${id}, Cambio: ${change}`);
                 const item = menuData.find(p => p.id === id);
                 
                 if (!item) {
-                    console.error("❌ Producto no encontrado en menuData con ID:", id);
+                    console.error(" Producto no encontrado en menuData con ID:", id);
                     return;
                 }
                 if (!item.available) {
@@ -476,10 +519,10 @@
             window.openCheckout = async function() {
                 const items = Object.values(cart);
                 console.log("🛒 Estado del carrito al hacer checkout:", cart);
-                console.log("📦 Items a enviar:", items);
+                console.log(" Items a enviar:", items);
                 
                 if (items.length === 0) {
-                    alert("⚠️ Tu carrito está vacío.\n\nPor favor, agrega al menos un producto antes de realizar el pedido.");
+                    alert("️ Tu carrito está vacío.\n\nPor favor, agrega al menos un producto antes de realizar el pedido.");
                     return;
                 }
                 
@@ -563,6 +606,129 @@
                     window.updateCart(currentModalProductId, 1);
                     window.closeProductModal();
                 }
+            }
+
+            // ✅ NUEVAS FUNCIONES PARA PERSONALIZACIÓN DE PRODUCTOS
+            
+            window.openCustomizationModal = function(id) {
+                const item = menuData.find(p => p.id === id);
+                if (!item) return;
+                
+                currentModalProductId = id;
+                currentCustomization = {
+                    productId: id,
+                    options: {},
+                    instructions: ''
+                };
+                
+                document.getElementById('custom-modal-title').textContent = item.name;
+                document.getElementById('custom-modal-price').textContent = '$' + item.price;
+                document.getElementById('custom-total-price').textContent = '$' + item.price;
+                document.getElementById('custom-instructions-text').value = '';
+                
+                // Generar opciones de personalización (ejemplo estático - luego se puede hacer dinámico desde Firebase)
+                const optionsContainer = document.getElementById('customization-options');
+                optionsContainer.innerHTML = '';
+                
+                // Ejemplo de opciones personalizables (esto se podría cargar desde Firebase)
+                const defaultOptions = {
+                    'Cebolla': ['Con cebolla', 'Sin cebolla'],
+                    'Cilantro': ['Con cilantro', 'Sin cilantro'],
+                    'Salsa': ['Con salsa', 'Sin salsa', 'Salsa aparte']
+                };
+                
+                // Si el producto tiene opciones personalizadas en Firebase, usarlas
+                const productOptions = item.customOptions || defaultOptions;
+                
+                Object.keys(productOptions).forEach(optionName => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'customization-option';
+                    
+                    const title = document.createElement('h4');
+                    title.textContent = optionName;
+                    optionDiv.appendChild(title);
+                    
+                    const buttonsDiv = document.createElement('div');
+                    buttonsDiv.className = 'option-buttons';
+                    
+                    productOptions[optionName].forEach((choice, index) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'option-btn' + (index === 0 ? ' selected' : '');
+                        btn.textContent = choice;
+                        btn.onclick = () => window.selectCustomOption(optionName, choice, btn);
+                        buttonsDiv.appendChild(btn);
+                        
+                        // Guardar la primera opción por defecto
+                        if (index === 0) {
+                            currentCustomization.options[optionName] = choice;
+                        }
+                    });
+                    
+                    optionDiv.appendChild(buttonsDiv);
+                    optionsContainer.appendChild(optionDiv);
+                });
+                
+                document.getElementById('customization-modal').classList.add('show');
+            }
+
+            window.selectCustomOption = function(optionName, choice, btnElement) {
+                // Remover selección previa en este grupo
+                const parent = btnElement.parentElement;
+                parent.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+                
+                // Agregar selección al botón clickeado
+                btnElement.classList.add('selected');
+                
+                // Guardar en currentCustomization
+                currentCustomization.options[optionName] = choice;
+            }
+
+            window.closeCustomizationModal = function(event) {
+                if (event && event.target.closest('.product-modal-content')) return;
+                document.getElementById('customization-modal').classList.remove('show');
+                currentModalProductId = null;
+                currentCustomization = {};
+            }
+
+            window.addCustomizedProductToCart = function() {
+                if (!currentModalProductId) return;
+                
+                const item = menuData.find(p => p.id === currentModalProductId);
+                if (!item) return;
+                
+                currentCustomization.instructions = document.getElementById('custom-instructions-text').value;
+                
+                // Agregar al carrito con las personalizaciones
+                if (!cart[currentModalProductId]) {
+                    cart[currentModalProductId] = { 
+                        ...item, 
+                        qty: 0,
+                        customization: currentCustomization
+                    };
+                }
+                cart[currentModalProductId].qty += 1;
+                
+                console.log("✅ Producto personalizado agregado:", cart[currentModalProductId]);
+                
+                window.updateCartBar();
+                renderMenu();
+                window.closeCustomizationModal();
+                
+                // Feedback visual
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Agregado';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 1500);
+            }
+
+            window.addCustomizedProductAndView = function() {
+                window.addCustomizedProductToCart();
+                // Aquí podrías agregar lógica para mostrar el carrito o hacer scroll
+                setTimeout(() => {
+                    document.getElementById('cart-bar').scrollIntoView({ behavior: 'smooth' });
+                }, 300);
             }
 
             if ('serviceWorker' in navigator) {
