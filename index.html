@@ -120,19 +120,19 @@
         </p>
     </div>
 
-    <!-- ✅ NUEVO: PANTALLA DE TIENDA CERRADA -->
+    <!-- PANTALLA DE TIENDA CERRADA -->
     <div id="closed-screen" class="error-screen" style="display: none;">
-        <div style="font-size: 4rem; margin-bottom: 1rem;"></div>
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🌙</div>
         <h1 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">Estamos temporalmente cerrados</h1>
         <p style="font-size: 1.1rem; max-width: 500px; margin-bottom: 2rem; line-height: 1.6; opacity: 0.9;" id="closed-message">
             En este momento no estamos recibiendo pedidos.
         </p>
         <a id="closed-whatsapp-btn" href="#" target="_blank" style="background: #25d366; color: white; padding: 1rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none;">
-             Contactar por WhatsApp
+            💬 Contactar por WhatsApp
         </a>
     </div>
 
-    <!-- ✅ NUEVO: PANTALLA DE DEMO EXPIRADA (Se muestra automáticamente si pasa la fecha) -->
+    <!-- PANTALLA DE DEMO EXPIRADA -->
     <div id="demo-expired-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; color: white; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; font-family: 'Poppins', sans-serif;">
         <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
         <h1 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">Demostración Finalizada</h1>
@@ -140,7 +140,6 @@
             El periodo de prueba de este menú digital ha expirado. <br>
             Si te gustó el resultado y quieres activarlo para tu negocio, contáctame para más información.
         </p>
-        <!-- CAMBIA EL NÚMERO DE WHATSAPP AQUÍ ABAJO -->
         <a href="https://wa.me/521234567890?text=Hola,%20me%20interesa%20activar%20el%20menú%20digital" id="expired-whatsapp-btn" style="background: #25d366; color: white; padding: 1rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             💬 Contactar por WhatsApp
         </a>
@@ -166,7 +165,7 @@
             <span class="cart-count" id="cart-count">0 productos</span>
             <span class="cart-total" id="cart-total">Total: $0</span>
         </div>
-        <button class="checkout-btn" onclick="window.openCheckout()">Ver pedido </button>
+        <button class="checkout-btn" onclick="window.openCheckout()">Ver pedido 🛒</button>
     </div>
 
     <div class="success-message" id="success-message">
@@ -204,16 +203,16 @@
                 <div id="custom-modal-price" class="modal-price"></div>
                 
                 <div id="customization-options">
-                    <!-- Las opciones se generarán dinámicamente -->
+                    <!-- Las opciones se generarán dinámicamente aquí -->
                 </div>
                 
                 <div class="custom-instructions">
                     <h4 style="font-size: 1rem; font-weight: 600; color: var(--secondary-color); margin-bottom: 0.8rem;">Indicaciones</h4>
-                    <textarea id="custom-instructions-text" placeholder="Sin chile, extra limón..."></textarea>
+                    <textarea id="custom-instructions-text" placeholder="Sin chile, extra limón, bien cocido..."></textarea>
                 </div>
                 
                 <div class="modal-footer-actions">
-                    <button class="btn-add-to-cart" onclick="window.addCustomizedProductToCart()">Agregar · <span id="custom-total-price">$0</span></button>
+                    <button class="btn-add-to-cart" onclick="window.addCustomizedProductToCart(event)">Agregar · <span id="custom-total-price">$0</span></button>
                     <button class="btn-add-and-view" onclick="window.addCustomizedProductAndView()">Agregar y ver pedido</button>
                 </div>
             </div>
@@ -231,7 +230,6 @@
     </a>
 
     <script>
-        // 1. OBTENER EL UID DEL USUARIO DESDE LA URL
         const urlParams = new URLSearchParams(window.location.search);
         const currentUserId = urlParams.get('user');
 
@@ -241,7 +239,6 @@
             document.getElementById('main-container').style.display = 'none';
             document.getElementById('main-footer').style.display = 'none';
         } else {
-            // 2. INICIALIZAR FIREBASE
             const firebaseConfig = {
                 apiKey: "AIzaSyAAgryOgzuaKQw8s2APP4ezc4k6igHRUmM",
                 authDomain: "tienda-digital-32a30.firebaseapp.com",
@@ -253,8 +250,7 @@
             firebase.initializeApp(firebaseConfig);
             const db = firebase.firestore();
 
-            // ⚙️ CONFIGURACIÓN DE LA DEMO: Define aquí cuántos días dura la prueba
-            const DEMO_DAYS_ALLOWED = 15; // <-- EDITA ESTE NÚMERO (Ej: 15, 30, etc.)
+            const DEMO_DAYS_ALLOWED = 15;
 
             async function checkDemoExpiration() {
                 try {
@@ -267,13 +263,9 @@
                             const diffTime = Math.abs(today - createdAt);
                             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
                             
-                            console.log(`Días desde el registro: ${diffDays} / Días permitidos: ${DEMO_DAYS_ALLOWED}`);
-
                             if (diffDays > DEMO_DAYS_ALLOWED) {
-                                document.body.style.overflow = 'hidden'; // Bloquea el scroll
+                                document.body.style.overflow = 'hidden';
                                 document.getElementById('demo-expired-overlay').style.display = 'flex';
-                                
-                                // Ocultar el resto del contenido de la tienda
                                 document.getElementById('main-header').style.display = 'none';
                                 document.getElementById('categories-nav').style.display = 'none';
                                 document.getElementById('main-container').style.display = 'none';
@@ -289,29 +281,23 @@
                 }
             }
             
-            // Ejecutar la verificación inmediatamente
             checkDemoExpiration();
 
             let menuData = [];
             let cart = {};
             let currentCategory = 'todos';
             let currentModalProductId = null;
-            let currentCustomization = {}; // ✅ NUEVO: Para guardar personalizaciones
+            let currentCustomization = {};
 
-            // ✅ MOVIDO AQUÍ: Para que esté disponible en el onSnapshot de Firebase
             let deferredPrompt;
             const installBtn = document.getElementById('install-btn');
 
-            // 3. CARGAR CONFIGURACIÓN Y ESTADO DE LA TIENDA
             db.collection('usuarios').doc(currentUserId).collection('config').doc('tema').onSnapshot((doc) => {
                 if (doc.exists) {
                     const config = doc.data();
-                    
-                    // ✅ NUEVO: Verificar si la tienda está abierta o cerrada
                     const isStoreOpen = config.storeOpen !== undefined ? config.storeOpen : true;
                     
                     if (!isStoreOpen) {
-                        // Mostrar pantalla de cerrado y ocultar el contenido de la tienda
                         document.getElementById('closed-screen').style.display = 'flex';
                         document.getElementById('main-header').style.display = 'none';
                         document.getElementById('categories-nav').style.display = 'none';
@@ -333,25 +319,22 @@
                             document.getElementById('closed-whatsapp-btn').style.display = 'none';
                         }
                     } else {
-                        // Restaurar la vista normal de la tienda
                         document.getElementById('closed-screen').style.display = 'none';
                         document.getElementById('main-header').style.display = '';
                         document.getElementById('categories-nav').style.display = '';
                         document.getElementById('main-container').style.display = '';
                         document.getElementById('main-footer').style.display = '';
                         
-                        // Estos elementos se controlan por su propia lógica, los restablecemos para que funcionen normal
                         document.getElementById('cart-bar').style.display = ''; 
-                        window.updateCartBar(); // Para que decida si mostrarlo o no según el carrito
+                        window.updateCartBar();
                         
-                        // ✅ CORRECCIÓN: Respetar el estado del botón de instalación
                         if (deferredPrompt) {
                             installBtn.style.display = 'block';
                         } else {
                             installBtn.style.display = 'none';
                         }
                         
-                        document.getElementById('whatsapp-support-btn').style.display = 'none'; // Se mostrará abajo si hay teléfono
+                        document.getElementById('whatsapp-support-btn').style.display = 'none';
 
                         const root = document.documentElement;
                         if (config.primaryColor) root.style.setProperty('--primary-color', config.primaryColor);
@@ -372,7 +355,7 @@
                         }
                         
                         if (config.address) document.getElementById('footer-address').textContent = '📍 ' + config.address;
-                        if (config.hours) document.getElementById('footer-hours').textContent = ' ' + config.hours;
+                        if (config.hours) document.getElementById('footer-hours').textContent = '🕐 ' + config.hours;
                         if (config.phone) document.getElementById('footer-phone').textContent = '📞 ' + config.phone;
                         
                         const whatsappBtn = document.getElementById('whatsapp-support-btn');
@@ -388,14 +371,12 @@
                 }
             });
 
-            // 4. CARGAR PRODUCTOS
             db.collection('usuarios').doc(currentUserId).collection('productos').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
                 menuData = [];
                 const categories = new Set(['todos']);
                 
                 snapshot.forEach((doc) => {
                     const product = { id: doc.id, ...doc.data() };
-                    // ✅ CORRECCIÓN: Asegurar que 'available' siempre sea un booleano
                     if (product.available === undefined) product.available = true;
                     
                     if (product.category) {
@@ -420,7 +401,6 @@
                 ).join('');
             }
 
-            // ✅ FUNCIONES GLOBALES (window.) para que el HTML pueda encontrarlas sin errores
             window.filterCategory = function(category) {
                 currentCategory = category;
                 document.querySelectorAll('.category-btn').forEach(btn => {
@@ -459,7 +439,8 @@
                                     : `<div class="quantity-controls">
                                         <button class="qty-btn" onclick="window.updateCart('${item.id}', -1)">−</button>
                                         <span class="qty-number" id="qty-${item.id}">${qty}</span>
-                                        <button class="qty-btn" onclick="window.updateCart('${item.id}', 1)">+</button>
+                                        <!-- ✅ CORRECCIÓN: El botón "+" ahora abre el modal de personalización -->
+                                        <button class="qty-btn" onclick="window.openCustomizationModal('${item.id}')">+</button>
                                       </div>`
                                 }
                             </div>
@@ -470,17 +451,8 @@
             }
 
             window.updateCart = function(id, change) {
-                console.log(` Intentando actualizar carrito. ID: ${id}, Cambio: ${change}`);
                 const item = menuData.find(p => p.id === id);
-                
-                if (!item) {
-                    console.error(" Producto no encontrado en menuData con ID:", id);
-                    return;
-                }
-                if (!item.available) {
-                    console.warn("⚠️ Producto no disponible:", item.name);
-                    return;
-                }
+                if (!item || !item.available) return;
                 
                 if (!cart[id]) cart[id] = { ...item, qty: 0 };
                 cart[id].qty += change;
@@ -488,8 +460,6 @@
                 if (cart[id].qty <= 0) {
                     delete cart[id];
                 }
-                
-                console.log("✅ Carrito actualizado:", cart);
                 
                 const qtyElement = document.getElementById(`qty-${id}`);
                 if (qtyElement) qtyElement.textContent = cart[id] ? cart[id].qty : 0;
@@ -505,8 +475,6 @@
                 const totalQty = items.reduce((sum, item) => sum + item.qty, 0);
                 const totalPrice = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
                 
-                console.log("📊 Barra del carrito - Cantidad:", totalQty, "Total:", totalPrice);
-                
                 if (totalQty > 0) {
                     cartBar.classList.add('visible');
                     cartCount.textContent = `${totalQty} producto${totalQty > 1 ? 's' : ''}`;
@@ -518,11 +486,8 @@
 
             window.openCheckout = async function() {
                 const items = Object.values(cart);
-                console.log("🛒 Estado del carrito al hacer checkout:", cart);
-                console.log(" Items a enviar:", items);
-                
                 if (items.length === 0) {
-                    alert("️ Tu carrito está vacío.\n\nPor favor, agrega al menos un producto antes de realizar el pedido.");
+                    alert("⚠️ Tu carrito está vacío.\n\nPor favor, agrega al menos un producto antes de realizar el pedido.");
                     return;
                 }
                 
@@ -546,7 +511,8 @@
                         name: item.name,
                         quantity: item.qty,
                         price: item.price,
-                        subtotal: item.price * item.qty
+                        subtotal: item.price * item.qty,
+                        customization: item.customization || null // ✅ Guarda las personalizaciones en el pedido
                     })),
                     total: total,
                     status: 'nuevo',
@@ -554,9 +520,7 @@
                 };
 
                 try {
-                    console.log("📤 Intentando guardar pedido para el usuario:", currentUserId);
                     await db.collection('usuarios').doc(currentUserId).collection('pedidos').add(order);
-                    
                     document.getElementById('success-message').classList.add('show');
                     cart = {};
                     window.updateCartBar();
@@ -608,7 +572,7 @@
                 }
             }
 
-            // ✅ NUEVAS FUNCIONES PARA PERSONALIZACIÓN DE PRODUCTOS
+            // ✅ FUNCIONES PARA PERSONALIZACIÓN DE PRODUCTOS
             
             window.openCustomizationModal = function(id) {
                 const item = menuData.find(p => p.id === id);
@@ -626,18 +590,16 @@
                 document.getElementById('custom-total-price').textContent = '$' + item.price;
                 document.getElementById('custom-instructions-text').value = '';
                 
-                // Generar opciones de personalización (ejemplo estático - luego se puede hacer dinámico desde Firebase)
                 const optionsContainer = document.getElementById('customization-options');
                 optionsContainer.innerHTML = '';
                 
-                // Ejemplo de opciones personalizables (esto se podría cargar desde Firebase)
+                // Opciones por defecto (luego se pueden hacer dinámicas desde el admin)
                 const defaultOptions = {
                     'Cebolla': ['Con cebolla', 'Sin cebolla'],
                     'Cilantro': ['Con cilantro', 'Sin cilantro'],
                     'Salsa': ['Con salsa', 'Sin salsa', 'Salsa aparte']
                 };
                 
-                // Si el producto tiene opciones personalizadas en Firebase, usarlas
                 const productOptions = item.customOptions || defaultOptions;
                 
                 Object.keys(productOptions).forEach(optionName => {
@@ -658,7 +620,6 @@
                         btn.onclick = () => window.selectCustomOption(optionName, choice, btn);
                         buttonsDiv.appendChild(btn);
                         
-                        // Guardar la primera opción por defecto
                         if (index === 0) {
                             currentCustomization.options[optionName] = choice;
                         }
@@ -672,14 +633,9 @@
             }
 
             window.selectCustomOption = function(optionName, choice, btnElement) {
-                // Remover selección previa en este grupo
                 const parent = btnElement.parentElement;
                 parent.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
-                
-                // Agregar selección al botón clickeado
                 btnElement.classList.add('selected');
-                
-                // Guardar en currentCustomization
                 currentCustomization.options[optionName] = choice;
             }
 
@@ -690,15 +646,13 @@
                 currentCustomization = {};
             }
 
-            window.addCustomizedProductToCart = function() {
+            window.addCustomizedProductToCart = function(event) {
                 if (!currentModalProductId) return;
-                
                 const item = menuData.find(p => p.id === currentModalProductId);
                 if (!item) return;
                 
                 currentCustomization.instructions = document.getElementById('custom-instructions-text').value;
                 
-                // Agregar al carrito con las personalizaciones
                 if (!cart[currentModalProductId]) {
                     cart[currentModalProductId] = { 
                         ...item, 
@@ -708,24 +662,25 @@
                 }
                 cart[currentModalProductId].qty += 1;
                 
-                console.log("✅ Producto personalizado agregado:", cart[currentModalProductId]);
-                
                 window.updateCartBar();
                 renderMenu();
                 window.closeCustomizationModal();
                 
-                // Feedback visual
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = '✅ Agregado';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 1500);
+                // Feedback visual en el botón
+                if (event && event.target) {
+                    const btn = event.target;
+                    const originalText = btn.textContent;
+                    btn.textContent = '✅ Agregado';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                    }, 1500);
+                }
             }
 
             window.addCustomizedProductAndView = function() {
-                window.addCustomizedProductToCart();
-                // Aquí podrías agregar lógica para mostrar el carrito o hacer scroll
+                // Simulamos el evento para reutilizar la función
+                const fakeEvent = { target: document.querySelector('.btn-add-to-cart') };
+                window.addCustomizedProductToCart(fakeEvent);
                 setTimeout(() => {
                     document.getElementById('cart-bar').scrollIntoView({ behavior: 'smooth' });
                 }, 300);
@@ -735,7 +690,6 @@
                 window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
             }
 
-            // ✅ El evento ahora usa las variables declaradas arriba
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
