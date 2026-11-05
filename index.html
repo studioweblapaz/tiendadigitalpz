@@ -116,6 +116,20 @@
         </a>
     </div>
 
+    <!-- ✅ NUEVO: PANTALLA DE DEMO EXPIRADA (Se muestra automáticamente si pasa la fecha) -->
+    <div id="demo-expired-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; color: white; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; font-family: 'Poppins', sans-serif;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
+        <h1 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">Demostración Finalizada</h1>
+        <p style="font-size: 1.1rem; max-width: 500px; margin-bottom: 2rem; line-height: 1.6; opacity: 0.9;">
+            El periodo de prueba de este menú digital ha expirado. <br>
+            Si te gustó el resultado y quieres activarlo para tu negocio, contáctame para más información.
+        </p>
+        <!-- CAMBIA EL NÚMERO DE WHATSAPP AQUÍ ABAJO -->
+        <a href="https://wa.me/521234567890?text=Hola,%20me%20interesa%20activar%20el%20menú%20digital" id="expired-whatsapp-btn" style="background: #25d366; color: white; padding: 1rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            💬 Contactar por WhatsApp
+        </a>
+    </div>
+
     <header class="header" id="main-header">
         <div class="logo" id="restaurant-logo"></div>
         <h1 class="restaurant-name" id="restaurant-name">Cargando...</h1>
@@ -196,6 +210,45 @@
             };
             firebase.initializeApp(firebaseConfig);
             const db = firebase.firestore();
+
+            // ⚙️ CONFIGURACIÓN DE LA DEMO: Define aquí cuántos días dura la prueba
+            const DEMO_DAYS_ALLOWED = 15; // <-- EDITA ESTE NÚMERO (Ej: 15, 30, etc.)
+
+            async function checkDemoExpiration() {
+                try {
+                    const userDoc = await db.collection('usuarios').doc(currentUserId).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        if (userData.createdAt) {
+                            const createdAt = userData.createdAt.toDate();
+                            const today = new Date();
+                            const diffTime = Math.abs(today - createdAt);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                            
+                            console.log(`Días desde el registro: ${diffDays} / Días permitidos: ${DEMO_DAYS_ALLOWED}`);
+
+                            if (diffDays > DEMO_DAYS_ALLOWED) {
+                                document.body.style.overflow = 'hidden'; // Bloquea el scroll
+                                document.getElementById('demo-expired-overlay').style.display = 'flex';
+                                
+                                // Ocultar el resto del contenido de la tienda
+                                document.getElementById('main-header').style.display = 'none';
+                                document.getElementById('categories-nav').style.display = 'none';
+                                document.getElementById('main-container').style.display = 'none';
+                                document.getElementById('main-footer').style.display = 'none';
+                                document.getElementById('cart-bar').style.display = 'none';
+                                document.getElementById('whatsapp-support-btn').style.display = 'none';
+                                document.getElementById('install-btn').style.display = 'none';
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error al verificar la demo:", error);
+                }
+            }
+            
+            // Ejecutar la verificación inmediatamente
+            checkDemoExpiration();
 
             let menuData = [];
             let cart = {};
