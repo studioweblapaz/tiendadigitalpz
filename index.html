@@ -179,10 +179,11 @@
         <button class="checkout-btn" onclick="window.openCheckoutModal()">Ver pedido 🛒</button>
     </div>
 
-    <div class="success-message" id="success-message">
-        <h2>✅ ¡Pedido Enviado!</h2>
-        <p>Tu pedido ha sido recibido.</p>
-        <button onclick="window.closeSuccess()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 20px; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600;">Cerrar</button>
+       <div class="success-message" id="success-message">
+        <h2 style="color: #25d366; margin-bottom: 1rem;">✅ ¡Pedido Enviado!</h2>
+        <p style="margin-bottom: 0.5rem;">Tu pedido ha sido recibido y está en proceso.</p>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 1.5rem;">¿Se te antojó algo más? <br><strong>Simplemente agrega nuevos productos al carrito y realiza un nuevo pedido.</strong></p>
+        <button onclick="window.closeSuccess()" style="padding: 0.8rem 1.5rem; background: var(--primary-color); color: white; border: none; border-radius: 25px; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 1rem;">Seguir viendo el menú</button>
     </div>
 
     <footer class="footer" id="main-footer">
