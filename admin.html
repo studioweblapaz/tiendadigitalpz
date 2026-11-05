@@ -86,7 +86,6 @@
             <h2 id="auth-title">🔐 Iniciar Sesión</h2>
             <input type="email" id="auth-email" placeholder="Correo electrónico">
             
-            <!-- ✅ NUEVO: Contenedor para el campo de contraseña y el botón de ojo -->
             <div style="position: relative; width: 100%; margin-bottom: 1rem;">
                 <input type="password" id="auth-password" placeholder="Contraseña" style="width: 100%; padding-right: 45px; box-sizing: border-box;">
                 <button type="button" onclick="window.togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.3rem; color: #666; padding: 0; display: flex; align-items: center; justify-content: center; height: 100%;">
@@ -102,7 +101,6 @@
         </div>
     </div>
 
-    <!-- ✅ NUEVO: PANTALLA DE DEMO EXPIRADA (Se muestra automáticamente si pasa la fecha) -->
     <div id="demo-expired-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; color: white; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; font-family: 'Poppins', sans-serif;">
         <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
         <h1 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700;">Demostración Finalizada</h1>
@@ -110,7 +108,6 @@
             El periodo de prueba de este menú digital ha expirado. <br>
             Si te gustó el resultado y quieres activarlo para tu negocio, contáctame para más información.
         </p>
-        <!-- CAMBIA EL NÚMERO DE WHATSAPP AQUÍ ABAJO -->
         <a href="https://wa.me/521234567890?text=Hola,%20me%20interesa%20activar%20el%20menú%20digital" id="expired-whatsapp-btn" style="background: #25d366; color: white; padding: 1rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             💬 Contactar por WhatsApp
         </a>
@@ -196,6 +193,12 @@
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                         <input type="checkbox" id="prod-available" checked style="width: auto;"> Disponible
                     </label>
+                </div>
+                <!-- ✅ NUEVO: Campo para opciones de personalización -->
+                <div class="form-group">
+                    <label>Opciones de personalización (Opcional)</label>
+                    <textarea id="prod-custom-options" rows="3" placeholder="Ejemplo:&#10;Tamaño: Chico, Mediano, Grande&#10;Cebolla: Con cebolla, Sin cebolla&#10;Salsa: Con salsa, Sin salsa, Aparte"></textarea>
+                    <small style="color: #666; font-size: 0.8rem; display: block; margin-top: 4px;">Escribe el nombre del grupo seguido de dos puntos (:) y las opciones separadas por coma. Cada grupo en una línea nueva.</small>
                 </div>
                 <button class="btn-save" id="btn-save-product" onclick="window.saveProduct()">Guardar Producto</button>
                 <button class="btn-secondary" id="btn-cancel-edit" onclick="window.cancelEdit()" style="display: none;">Cancelar Edición</button>
@@ -289,8 +292,7 @@
         const CLOUDINARY_CLOUD_NAME = "oxznb5kn";
         const CLOUDINARY_UPLOAD_PRESET = "Tienda Digital";
 
-        // ⚙️ CONFIGURACIÓN DE LA DEMO: Define aquí cuántos días dura la prueba
-        const DEMO_DAYS_ALLOWED = 15; // <-- EDITA ESTE NÚMERO (Ej: 15, 30, etc.)
+        const DEMO_DAYS_ALLOWED = 15;
 
         let currentUserId = null;
         let currentUserRole = 'admin';
@@ -313,56 +315,41 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUserId = user.uid;
-                console.log("✅ Usuario logueado. UID:", currentUserId);
                 
                 const userDoc = await db.collection('usuarios').doc(currentUserId).get();
                 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
                     currentUserRole = userData.role || 'admin';
-                    console.log("👤 Rol del usuario:", currentUserRole);
                     
-                    // ✅ NUEVO: Verificar expiración de la demo
                     if (userData.createdAt) {
                         const createdAt = userData.createdAt.toDate();
                         const today = new Date();
                         const diffTime = Math.abs(today - createdAt);
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                        
-                        console.log(`Días desde el registro: ${diffDays} / Días permitidos: ${DEMO_DAYS_ALLOWED}`);
 
                         if (diffDays > DEMO_DAYS_ALLOWED) {
-                            document.body.style.overflow = 'hidden'; // Bloquea el scroll
+                            document.body.style.overflow = 'hidden';
                             document.getElementById('demo-expired-overlay').style.display = 'flex';
-                            // Ocultar el panel de admin para que no se vea nada detrás
                             document.getElementById('admin-panel').classList.add('hidden');
-                            return; // Detener la ejecución del resto de la carga
+                            return;
                         }
                     }
                     
                     if (currentUserRole === 'admin') {
                         storeOwnerId = currentUserId;
-                        console.log("👑 Es admin. storeOwnerId = currentUserId:", storeOwnerId);
-                        
                         if (!userData.ownerId) {
-                            await db.collection('usuarios').doc(currentUserId).update({
-                                ownerId: currentUserId
-                            });
-                            console.log("✅ ownerId agregado al documento del admin");
+                            await db.collection('usuarios').doc(currentUserId).update({ ownerId: currentUserId });
                         }
                     } else {
                         storeOwnerId = userData.ownerId;
-                        console.log("🔗 Es empleado. storeOwnerId:", storeOwnerId);
-                        
                         if (!storeOwnerId) {
-                            console.error("❌ ERROR: Este empleado no tiene ownerId");
-                            alert("Error: Cuenta de empleado inválida. Pide al administrador que te elimine y te vuelva a crear.");
+                            alert("Error: Cuenta de empleado inválida.");
                             auth.signOut();
                             return;
                         }
                     }
                 } else {
-                    console.log("Usuario no existe en Firestore, creando como admin...");
                     currentUserRole = 'admin';
                     storeOwnerId = currentUserId;
                     await db.collection('usuarios').doc(currentUserId).set({
@@ -397,8 +384,7 @@
         });
 
         window.applyRolePermissions = function() {
-            const adminElements = document.querySelectorAll('.admin-only');
-            adminElements.forEach(el => {
+            document.querySelectorAll('.admin-only').forEach(el => {
                 el.style.display = currentUserRole === 'admin' ? '' : 'none';
             });
         }
@@ -411,14 +397,9 @@
             document.getElementById('auth-error').style.display = 'none';
         }
 
-        // ✅ NUEVO: Función para mostrar/ocultar contraseña en cualquier dispositivo
         window.togglePasswordVisibility = function() {
             const passwordInput = document.getElementById('auth-password');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-            } else {
-                passwordInput.type = 'password';
-            }
+            passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
         }
 
         window.handleAuth = async function() {
@@ -442,21 +423,18 @@
                     await auth.signInWithEmailAndPassword(email, password);
                 } else {
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    const uid = userCredential.user.uid; 
-                    await db.collection('usuarios').doc(uid).set({
+                    await db.collection('usuarios').doc(userCredential.user.uid).set({
                         email: email,
                         role: 'admin',
-                        ownerId: uid,
+                        ownerId: userCredential.user.uid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 }
             } catch (error) {
-                console.error(error);
                 let msg = 'Error de autenticación.';
                 if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') msg = 'Correo o contraseña incorrectos.';
                 if (error.code === 'auth/email-already-in-use') msg = 'Este correo ya está registrado.';
                 if (error.code === 'auth/weak-password') msg = 'La contraseña debe tener al menos 6 caracteres.';
-                if (error.code === 'auth/invalid-email') msg = 'El formato del correo no es válido.';
                 errorEl.textContent = msg;
                 errorEl.style.display = 'block';
             } finally {
@@ -466,9 +444,7 @@
         }
 
         window.logout = function() {
-            if(confirm('¿Cerrar sesión?')) {
-                auth.signOut();
-            }
+            if(confirm('¿Cerrar sesión?')) auth.signOut();
         }
 
         window.switchTab = function(tab) {
@@ -578,18 +554,15 @@
                 btn.textContent = '💾 Guardar Toda la Configuración'; btn.disabled = false;
                 alert('✅ Configuración guardada.');
             } catch (error) {
-                console.error(error);
                 btn.textContent = '💾 Guardar Toda la Configuración'; btn.disabled = false;
                 alert('Error al guardar: ' + error.message);
             }
         }
 
         window.loadProducts = function() {
-            console.log("📦 Cargando productos del storeOwnerId:", storeOwnerId);
             db.collection('usuarios').doc(storeOwnerId).collection('productos').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
                 products = [];
                 snapshot.forEach((doc) => products.push({ id: doc.id, ...doc.data() }));
-                console.log("✅ Productos cargados:", products.length);
                 window.renderProducts();
             });
         }
@@ -647,6 +620,28 @@
             const fileInput = document.getElementById('prod-image-file');
             let imageUrl = document.getElementById('prod-image-url').value;
 
+            // ✅ NUEVO: Parsear opciones de personalización
+            const customOptionsText = document.getElementById('prod-custom-options').value.trim();
+            let customOptions = null;
+            if (customOptionsText) {
+                try {
+                    customOptions = {};
+                    const lines = customOptionsText.split('\n');
+                    lines.forEach(line => {
+                        const parts = line.split(':');
+                        if (parts.length >= 2) {
+                            const groupName = parts[0].trim();
+                            const options = parts.slice(1).join(':').split(',').map(opt => opt.trim()).filter(opt => opt.length > 0);
+                            if (groupName && options.length > 0) {
+                                customOptions[groupName] = options;
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.error("Error al parsear opciones de personalización", e);
+                }
+            }
+
             if (!name || !price || !category) { alert('Por favor completa nombre, precio y categoría.'); return; }
 
             btn.textContent = 'Subiendo y Guardando...'; btn.disabled = true;
@@ -662,6 +657,7 @@
                     ownerId: storeOwnerId,
                     name, description: desc, detailedDescription: detailedDesc,
                     price, category, image: imageUrl, available,
+                    customOptions: customOptions, // ✅ NUEVO
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
@@ -674,7 +670,6 @@
                 window.cancelEdit();
                 alert('✅ Producto guardado correctamente.');
             } catch (error) {
-                console.error(error);
                 alert('Error al guardar: ' + error.message);
             }
             btn.textContent = 'Guardar Producto'; btn.disabled = false;
@@ -690,6 +685,16 @@
             document.getElementById('prod-category').value = p.category;
             document.getElementById('prod-available').checked = p.available;
             document.getElementById('prod-image-url').value = p.image || '';
+            
+            // ✅ NUEVO: Cargar opciones de personalización en el textarea
+            let customOptionsText = '';
+            if (p.customOptions) {
+                customOptionsText = Object.entries(p.customOptions).map(([group, options]) => {
+                    return `${group}: ${options.join(', ')}`;
+                }).join('\n');
+            }
+            document.getElementById('prod-custom-options').value = customOptionsText;
+            
             if (p.image) {
                 document.getElementById('prod-image-preview').src = p.image;
                 document.getElementById('prod-image-preview').style.display = 'block';
@@ -710,6 +715,7 @@
             document.getElementById('prod-image-file').value = '';
             document.getElementById('prod-image-url').value = '';
             document.getElementById('prod-image-preview').style.display = 'none';
+            document.getElementById('prod-custom-options').value = ''; // ✅ NUEVO
             document.getElementById('btn-save-product').textContent = 'Guardar Producto';
             document.getElementById('btn-cancel-edit').style.display = 'none';
         }
@@ -744,7 +750,30 @@
             
             orders.forEach(o => {
                 const time = o.timestamp ? o.timestamp.toDate().toLocaleString('es-MX', {hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit'}) : 'Recién';
-                const itemsHTML = o.items.map(i => `<div class="order-item"><span>${i.quantity}x ${i.name}</span><span>$${i.subtotal}</span></div>`).join('');
+                
+                // ✅ NUEVO: Mostrar personalizaciones en cada ítem del pedido
+                const itemsHTML = o.items.map(i => {
+                    let customHTML = '';
+                    if (i.customization) {
+                        if (i.customization.options && Object.keys(i.customization.options).length > 0) {
+                            customHTML += `<div style="font-size: 0.8rem; color: #666; margin-top: 4px; padding-left: 12px; border-left: 2px solid #ddd;">`;
+                            for (const [key, value] of Object.entries(i.customization.options)) {
+                                customHTML += `<div>• ${key}: ${value}</div>`;
+                            }
+                            customHTML += `</div>`;
+                        }
+                        if (i.customization.instructions) {
+                            customHTML += `<div style="font-size: 0.8rem; color: #e74c3c; margin-top: 4px; padding-left: 12px; border-left: 2px solid #e74c3c; font-weight: 600;">📝 ${i.customization.instructions}</div>`;
+                        }
+                    }
+                    return `<div class="order-item" style="flex-direction: column; align-items: flex-start; gap: 2px; padding: 0.4rem 0; border-bottom: 1px dashed #eee;">
+                                <div style="display: flex; justify-content: space-between; width: 100%; font-weight: 600;">
+                                    <span>${i.quantity}x ${i.name}</span>
+                                    <span>$${i.subtotal}</span>
+                                </div>
+                                ${customHTML}
+                            </div>`;
+                }).join('');
                 
                 const div = document.createElement('div');
                 div.className = `order-card ${o.status}`;
@@ -756,8 +785,15 @@
                         </span>
                     </div>
                     <div style="margin-bottom: 0.5rem;">👤 ${o.customerName} | 📍 ${o.tableNumber}</div>
-                    <div class="order-items">${itemsHTML}</div>
-                    ${o.notes ? `<div style="background: #fff3cd; padding: 0.5rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 0.5rem;">📝 ${o.notes}</div>` : ''}
+                    
+                    ${o.notes ? `<div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 0.8rem; border-radius: 8px; font-size: 0.9rem; margin-bottom: 0.8rem; color: #856404;">
+                        <strong>⚠️ Nota general del pedido:</strong> ${o.notes}
+                    </div>` : ''}
+                    
+                    <div class="order-items" style="background: #f8f9fa; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;">
+                        ${itemsHTML}
+                    </div>
+                    
                     <div style="text-align: right; font-weight: 700; color: #25d366; font-size: 1.1rem; margin-bottom: 0.8rem;">Total: $${o.total}</div>
                     <div class="order-actions">
                         ${o.status === 'nuevo' ? `<button class="btn-action btn-process" onclick="window.updateOrderStatus('${o.id}', 'processing')">En proceso</button>` : ''}
@@ -865,7 +901,6 @@
                 }, 2500);
                 
             }).catch(err => {
-                console.error('Error al copiar: ', err);
                 alert('Tu link es: ' + storeLink);
             });
         }
@@ -878,9 +913,7 @@
                 await db.collection('usuarios').doc(storeOwnerId).collection('config').doc('tema').set({
                     storeOpen: isOpen
                 }, { merge: true });
-                console.log('Estado de la tienda actualizado:', isOpen);
             } catch (error) {
-                console.error('Error al actualizar estado:', error);
                 alert('Error al cambiar el estado de la tienda');
                 document.getElementById('store-open-toggle').checked = !isOpen;
                 statusText.textContent = !isOpen ? 'Tienda: Abierta 🟢' : 'Tienda: Cerrada 🔴';
@@ -888,11 +921,9 @@
         }
 
         window.loadEmployees = function() {
-            console.log("👥 Cargando empleados del admin. storeOwnerId:", storeOwnerId, "currentUserId:", currentUserId);
             db.collection('usuarios').where('role', '==', 'empleado').where('ownerId', '==', storeOwnerId).onSnapshot((snapshot) => {
                 employees = [];
                 snapshot.forEach((doc) => employees.push({ id: doc.id, ...doc.data() }));
-                console.log("✅ Empleados cargados:", employees.length);
                 window.renderEmployees();
             });
         }
@@ -929,16 +960,11 @@
                 return;
             }
 
-            console.log("🛠️ Iniciando creación de empleado. storeOwnerId:", storeOwnerId, "currentUserId:", currentUserId);
-
             if (confirm('⚠️ IMPORTANTE: Para crear esta cuenta, el sistema cerrará tu sesión actual por seguridad. Deberás volver a iniciar sesión como Administrador después. ¿Continuar?')) {
                 try {
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    const newUid = userCredential.user.uid;
                     
-                    console.log("📝 Guardando empleado en Firestore con ownerId:", storeOwnerId);
-                    
-                    await db.collection('usuarios').doc(newUid).set({
+                    await db.collection('usuarios').doc(userCredential.user.uid).set({
                         name: name,
                         email: email,
                         role: 'empleado',
@@ -946,14 +972,10 @@
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    console.log("✅ Empleado creado exitosamente. UID:", newUid, "ownerId:", storeOwnerId);
-
                     await auth.signOut();
-                    
                     alert('✅ Empleado creado exitosamente. Por favor, inicia sesión nuevamente como Administrador.');
                     window.toggleAuthMode();
                 } catch (error) {
-                    console.error("❌ Error al crear empleado:", error);
                     let msg = 'Error al crear empleado.';
                     if (error.code === 'auth/email-already-in-use') msg = 'Este correo ya está registrado.';
                     if (error.code === 'auth/weak-password') msg = 'La contraseña debe tener al menos 6 caracteres.';
@@ -968,7 +990,6 @@
                     await db.collection('usuarios').doc(empId).delete();
                     alert('✅ Empleado eliminado del sistema.');
                 } catch (error) {
-                    console.error(error);
                     alert('Error al eliminar: ' + error.message);
                 }
             }
